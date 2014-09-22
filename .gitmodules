@@ -28,3 +28,42 @@
 [submodule "implementations/luajit"]
 	path = implementations/luajit
 	url = http://luajit.org/git/luajit-2.0.git
+[submodule "implementations/T-baseline"]
+	path = implementations/T-baseline
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-args-in-frame"]
+	path = implementations/T-without-args-in-frame
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-blocks-without-context"]
+	path = implementations/T-without-blocks-without-context
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-catch-nonlocal-return-node"]
+	path = implementations/T-without-catch-nonlocal-return-node
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-control-specialization"]
+	path = implementations/T-without-control-specialization
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-custom-PICs"]
+	path = implementations/T-without-custom-PICs
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-eager-primitives"]
+	path = implementations/T-without-eager-primitives
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-execute-void"]
+	path = implementations/T-without-execute-void
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-global-caching-and-opt"]
+	path = implementations/T-without-global-caching-and-opt
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-local-nonlocal-var-distinction"]
+	path = implementations/T-without-local-nonlocal-var-distinction
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-object-layout"]
+	path = implementations/T-without-object-layout
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-unessential-lowering-prims"]
+	path = implementations/T-without-unessential-lowering-prims
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-var-access-specialization"]
+	path = implementations/T-without-var-access-specialization
+	url = git@github.com:smarr/TruffleSOM.git
