@@ -28,3 +28,39 @@
 [submodule "implementations/luajit"]
 	path = implementations/luajit
 	url = http://luajit.org/git/luajit-2.0.git
+[submodule "implementations/T-baseline"]
+	path = implementations/T-baseline
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-only-generic-field-access"]
+	path = implementations/T-only-generic-field-access
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-only-generic-var-access"]
+	path = implementations/T-only-generic-var-access
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-catch-nonlocalreturn-node"]
+	path = implementations/T-without-catch-nonlocalreturn-node
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-control-specialization"]
+	path = implementations/T-without-control-specialization
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-eager-primitives"]
+	path = implementations/T-without-eager-primitives
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-execute-void"]
+	path = implementations/T-without-execute-void
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-explicit-frame-initialization"]
+	path = implementations/T-without-explicit-frame-initialization
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-extra-block-with-context"]
+	path = implementations/T-without-extra-block-with-context
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-global-lookup-caching"]
+	path = implementations/T-without-global-lookup-caching
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-local-nonlocal-distinction"]
+	path = implementations/T-without-local-nonlocal-distinction
+	url = git@github.com:smarr/TruffleSOM.git
+[submodule "implementations/T-without-lookup-caching"]
+	path = implementations/T-without-lookup-caching
+	url = git@github.com:smarr/TruffleSOM.git
