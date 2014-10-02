@@ -1,3 +1,19 @@
+## Warmup Plot
+warmup_plot <- function (data, group = "VM") {
+  upperBound <- 2 * median(data$Value)
+  data <- ddply(data, ~ Benchmark, here(transform),
+                ValCut = pmin(Value, upperBound))
+  
+  plot <- ggplot(data, aes_string(x="Iteration", y="ValCut"))
+  plot <- plot + geom_line(aes_string(colour = group))
+  plot <- plot + ggtitle(bench_name)
+  plot <- plot + theme_simple()
+  plot
+}
+
+
+## Theme settings
+
 theme_simple <- function() {
     theme_bw() +
     theme(axis.text.x          = element_text(size = 12, lineheight=0.7),
