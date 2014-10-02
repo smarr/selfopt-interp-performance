@@ -22,6 +22,9 @@ build_branch() {
   exp="$1"
   INFO Build TruffleSOM $exp
   cd $exp
+  git submodule init
+  git submodule update
+  
   make clean > /dev/null
   mkdir libs; cp ../graal/build/truffle*.jar libs/
   make > /dev/null || {

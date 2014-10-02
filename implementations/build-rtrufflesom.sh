@@ -28,6 +28,9 @@ build_branch() {
   INFO Build RTruffleSOM $exp
   
   cd $exp
+  git submodule init
+  git submodule update
+  
   make clean > /dev/null
   make -j4 > /dev/null || {
     ERR Build of $exp failed.
