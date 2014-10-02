@@ -67,3 +67,30 @@
 [submodule "implementations/T-without-var-access-specialization"]
 	path = implementations/T-without-var-access-specialization
 	url = https://github.com/smarr/TruffleSOM.git
+[submodule "implementations/R-without-catch-nonlocal-return-node"]
+	path = implementations/R-without-catch-nonlocal-return-node
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-control-specialization"]
+	path = implementations/R-without-control-specialization
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-custom-PICs"]
+	path = implementations/R-without-custom-PICs
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-execute-void"]
+	path = implementations/R-without-execute-void
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-global-caching-and-opt"]
+	path = implementations/R-without-global-caching-and-opt
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-local-nonlocal-var-distinction"]
+	path = implementations/R-without-local-nonlocal-var-distinction
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-splitting-frame-variables"]
+	path = implementations/R-without-splitting-frame-variables
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-baseline"]
+	path = implementations/R-baseline
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-blocks-without-context"]
+	path = implementations/R-without-blocks-without-context
+	url = https://github.com/smarr/RTruffleSOM.git
