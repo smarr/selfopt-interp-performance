@@ -12,6 +12,7 @@ load_and_install_if_necessary("plyr")
 load_and_install_if_necessary("ggplot2")
 load_and_install_if_necessary("psych")   # uses only geometric.mean
 load_and_install_if_necessary("tables")
+load_and_install_if_necessary("Rmisc")
 
 source("data-processing.R")
 source("plots.R")
