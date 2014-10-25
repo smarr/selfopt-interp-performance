@@ -1,0 +1,155 @@
+Brief assessment of performance difference between using Graal for
+interpreter and plain Truffle
+
+```{r init, echo=FALSE, message=FALSE, warning=FALSE, results='hide', errors=FALSE}
+# load libraries, the data, and prepare it
+if (Sys.getenv("RSTUDIO") == "1") { setwd("/Users/smarr/Projects/PostDoc/COMPARE-TRACE-EVAL/experiments/jit-jitter/") }
+
+# load libraries, the data, and prepare it
+source("config.R", chdir=TRUE)
+data_file = "../data/benchmark.003.data"
+
+source("../scripts/init.R", chdir=TRUE)
+data <- droplevels(subset(data, VM == 'TruffleSOM-graal-experiments'))
+```
+
+
+
+# Investigating the effect of heap size
+
+summary(data)
+summary(db)
+```{r data-preparation}
+stabilized <- droplevels(subset(data, Iteration >= 1100 & Iteration <= 1450))
+stats <- ddply(stabilized, ~ Benchmark + VM + Suite + Var + Cores + Extra,
+               summarise,
+               Time.geomean              = geometric.mean(Value),
+               Time.stddev               = sd(Value),
+               Time.median               = median(Value),
+               max = max(Value),
+               min = min(Value))
+norm <- ddply(stats, ~ Benchmark + VM + Suite + Cores + Extra, transform,
+              RuntimeRatio = Time.geomean / Time.geomean[Var == "baseline"])
+vms <- ddply(norm, ~ VM + Var,
+             summarise,
+             RunRatio.geomean = geometric.mean(RuntimeRatio))
+```
+
+```{r statics-overview, echo=FALSE, fig.width=5, fig.height=2.5, dev='png'}
+for (vm in levels(data$VM)) {
+ plot <- ggplot(subset(norm, VM == vm), aes(x=reorder(Var, RuntimeRatio, FUN=function (x) -median(x)), Var, y=RuntimeRatio)) +
+  geom_hline(aes(yintercept=0.5), colour="#cccccc", linetype="dashed") +
+  geom_hline(aes(yintercept=0.7), colour="#cccccc", linetype="dashed") +
+  geom_hline(aes(yintercept=1), colour="#cccccc", linetype="dashed") +
+  geom_hline(aes(yintercept=2), colour="#cccccc", linetype="dashed") +
+  geom_hline(aes(yintercept=3), colour="#cccccc", linetype="dashed") +
+  geom_hline(aes(yintercept=4), colour="#cccccc", linetype="dashed") +
+  geom_hline(aes(yintercept=5), colour="#cccccc", linetype="dashed") +
+  geom_hline(aes(yintercept=10), colour="#cccccc", linetype="dashed") +
+  #geom_hline(aes(yintercept=100), colour="#cccccc", linetype="dashed") +
+  #geom_hline(aes(yintercept=1000), colour="#cccccc", linetype="dashed") +
+  geom_boxplot(fill=get_color(5, 7)) + theme_bw() + theme_simple() + theme(axis.text.x = element_text(angle= 90, vjust=0.5, hjust=1)) +
+  #scale_y_continuous() +
+  scale_y_log10()  +
+  #scale_y_log10(breaks=c(1,2,3,10,20,30,50,100,200,300,500,1000)) + #limit=c(0,30), breaks=seq(0,100,5), expand = c(0,0)
+  coord_flip() + xlab("Runtime, normalized\nto Java (lower is better)") +
+  ggtitle(vm)
+ print(plot)
+}
+```
+
+
+
+```{r steady-state}
+# db_steady <- droplevels(subset(db, Iteration >= 520 & Iteration <= 990))
+# db_sh_steady <- droplevels(subset(db_sh, Iteration >= 520 & Iteration <= 990))
+# 
+# summary(db_steady)
+# summary(db_sh_steady)
+# 
+# 
+#   plot <- ggplot(db_steady, aes_string(x="Iteration", y="ValCut"))
+#   plot <- plot + geom_line(aes(colour = Cores))
+#   plot <- plot + ggtitle("DeltaBlue - heap not set")
+#   plot <- plot + theme_simple()
+#   plot
+# 
+# plot <- ggplot(db_sh_steady, aes_string(x="Iteration", y="ValCut"))
+#   plot <- plot + geom_line(aes(colour = Cores))
+#   plot <- plot + ggtitle("DeltaBlue - heap set to 2GB")
+#   plot <- plot + theme_simple()
+#   plot
+```
+
+
+
+
+```{r stats}
+# steady <- droplevels(subset(data, Iteration >= 520 & Iteration <= 990))
+# 
+# over30 <- ddply(steady, ~ Benchmark + VM + Suite + Var + Iteration,
+#                  summarise,
+#                  Time.geomean              = geometric.mean(Value),
+#                  Time.stddev               = sd(Value),
+#                  Time.median               = median(Value),
+#                  max = max(Value),
+#                  min = min(Value),
+#                  ci.upper = CI(Value, ci = 0.95)['upper'],
+#                  ci.lower = CI(Value, ci = 0.95)['lower'],
+#                  ci.mean  = CI(Value, ci = 0.95)['mean'])
+# 
+# perExpOver30 <-  ddply(over30, ~ Benchmark + VM + Suite + Var,
+#                  summarise,
+#                  TTime.geomean              = geometric.mean(Time.geomean),
+#                  TTime.stddev               = sd(Time.geomean),
+#                  TTime.median               = median(Time.geomean),
+#                  max = max(Time.geomean),
+#                  min = min(Time.geomean),
+#                  ci.upper = CI(Time.geomean, ci = 0.95)['upper'],
+#                  ci.lower = CI(Time.geomean, ci = 0.95)['lower'],
+#                  ci.mean  = CI(Time.geomean, ci = 0.95)['mean'])
+# 
+# perExpDirect <-  ddply(steady, ~ Benchmark + VM + Suite + Var,
+#                  summarise,
+#                  TTime.geomean              = geometric.mean(Value),
+#                  TTime.stddev               = sd(Value),
+#                  TTime.median               = median(Value),
+#                  max = max(Value),
+#                  min = min(Value),
+#                  ci.upper = CI(Value, ci = 0.95)['upper'],
+#                  ci.lower = CI(Value, ci = 0.95)['lower'],
+#                  ci.mean  = CI(Value, ci = 0.95)['mean'])
+# 
+# core1steady <- droplevels(subset(data, Iteration >= 520 & Iteration <= 990 & Cores == 1))
+# perExpDirectC1 <-  ddply(core1steady, ~ Benchmark + VM + Suite + Var,
+#                  summarise,
+#                  TTime.geomean              = geometric.mean(Value),
+#                  TTime.stddev               = sd(Value),
+#                  TTime.median               = median(Value),
+#                  max = max(Value),
+#                  min = min(Value),
+#                  ci.upper = CI(Value, ci = 0.95)['upper'],
+#                  ci.lower = CI(Value, ci = 0.95)['lower'],
+#                  ci.mean  = CI(Value, ci = 0.95)['mean'])
+```
+
+
+## Complete Data Set
+
+All runs and all data. Note, there aren't measurements for all VMs and all
+experiments.
+
+```{r full, echo=TRUE, dev='png', fig.keep='all', fig.width=25, fig.height=10}
+bench <- "Fannkuch"
+vm    <- "TruffleSOM-interp-experiments"
+var   <- "without-execute-void"
+
+for (bench in levels(data$Benchmark)) {
+for (var in levels(data$Var)) {
+for (vm in levels(data$VM)) {
+  tryCatch({
+    d <- droplevels(subset(data, Benchmark == bench & VM == vm & Var == var))
+    print(warmup_plot(d, paste0(bench, " ", vm, " ", var), group = "Cores"))
+  }, error = function (cond) { cat(paste0("Failed to plot: ", bench, " ", vm, " ", var)) })
+}}}
+```
