@@ -1,12 +1,12 @@
 ## Warmup Plot
-warmup_plot <- function (data, group = "VM") {
+warmup_plot <- function (data, title, group = "VM") {
   upperBound <- 2 * median(data$Value)
   data <- ddply(data, ~ Benchmark, here(transform),
                 ValCut = pmin(Value, upperBound))
   
   plot <- ggplot(data, aes_string(x="Iteration", y="ValCut"))
   plot <- plot + geom_line(aes_string(colour = group))
-  plot <- plot + ggtitle(bench_name)
+  plot <- plot + ggtitle(title)
   plot <- plot + theme_simple()
   plot
 }
