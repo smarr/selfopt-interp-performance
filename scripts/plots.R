@@ -16,12 +16,12 @@ warmup_plot <- function (data, title, group = "VM") {
 
 theme_simple <- function() {
     theme_bw() +
-    theme(axis.text.x          = element_text(size = 12, lineheight=0.7),
+    theme(axis.text.x          = element_text(size = 9, lineheight=0.7),
           axis.title.x         = element_blank(),
-          axis.title.y         = element_text(size = 12),
-          axis.text.y          = element_text(size = 12),
+          axis.title.y         = element_text(size = 9),
+          axis.text.y          = element_text(size = 9),
           axis.line            = element_line(colour = "gray"),
-          plot.title           = element_text(size = 12),
+          plot.title           = element_text(size = 9),
           panel.background     = element_blank(), #element_rect(fill = NA, colour = NA),
           panel.grid.major     = element_blank(),
           panel.grid.minor     = element_blank(),
