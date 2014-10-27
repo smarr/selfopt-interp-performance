@@ -49,9 +49,6 @@
 [submodule "implementations/T-without-eager-primitives"]
 	path = implementations/T-without-eager-primitives
 	url = https://github.com/smarr/TruffleSOM.git
-[submodule "implementations/T-without-execute-void"]
-	path = implementations/T-without-execute-void
-	url = https://github.com/smarr/TruffleSOM.git
 [submodule "implementations/T-without-global-caching-and-opt"]
 	path = implementations/T-without-global-caching-and-opt
 	url = https://github.com/smarr/TruffleSOM.git
@@ -76,9 +73,6 @@
 [submodule "implementations/R-without-custom-PICs"]
 	path = implementations/R-without-custom-PICs
 	url = https://github.com/smarr/RTruffleSOM.git
-[submodule "implementations/R-without-execute-void"]
-	path = implementations/R-without-execute-void
-	url = https://github.com/smarr/RTruffleSOM.git
 [submodule "implementations/R-without-global-caching-and-opt"]
 	path = implementations/R-without-global-caching-and-opt
 	url = https://github.com/smarr/RTruffleSOM.git
@@ -93,4 +87,16 @@
 	url = https://github.com/smarr/RTruffleSOM.git
 [submodule "implementations/R-without-blocks-without-context"]
 	path = implementations/R-without-blocks-without-context
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/T-minimal"]
+	path = implementations/T-minimal
+	url = https://github.com/smarr/TruffleSOM.git
+[submodule "implementations/R-minimal"]
+	path = implementations/R-minimal
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-minimal-without-jit-annotations"]
+	path = implementations/R-minimal-without-jit-annotations
+	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/R-without-unessential-lowering-prims"]
+	path = implementations/R-without-unessential-lowering-prims
 	url = https://github.com/smarr/RTruffleSOM.git
