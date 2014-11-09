@@ -3,11 +3,6 @@
 source ./script.inc
 source ./config.inc
 
-
-# download PyPy
-get_pypy
-export PYPY_DIR=`pwd`/pypy
-
 PAR_JOBS=8
 declare -a job_pids
 
@@ -28,11 +23,16 @@ build_branch() {
   INFO Build RTruffleSOM $exp
   
   cd $exp
+  get_pypy
   git submodule init
   git submodule update
   
   make clean > /dev/null
-  make -j4 > /dev/null || {
+  make RTruffleSOM-jit || {
+    ERR Build of $exp failed.
+    exit 1
+  }
+  make RTruffleSOM-no-jit || {
     ERR Build of $exp failed.
     exit 1
   }
@@ -56,3 +56,4 @@ for exp in $( ls -d R-* ); do
   fi
 done
 wait
+
