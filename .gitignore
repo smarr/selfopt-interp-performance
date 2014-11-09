@@ -9,3 +9,4 @@
 *.md
 *.html
 .Rhistory
+.Rproj.user
