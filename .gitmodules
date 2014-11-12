@@ -79,3 +79,6 @@
 [submodule "implementations/R-without-unessential-lowering-prims"]
 	path = implementations/R-without-unessential-lowering-prims
 	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/classic-benchmarks"]
+	path = implementations/classic-benchmarks
+	url = https://github.com/smarr/Classic-Benchmarks.git
