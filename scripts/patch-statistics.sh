@@ -19,7 +19,7 @@ collect_stats() {
     shortName=${branch/${BRANCH_PREFIX}\//}
     echo -ne "$VM,$shortName,\t\t" >> $DATA_PATCH
     echo -ne "$VM,$shortName,\t\t" >> $DATA_CLOC
-    git diff --shortstat remotes/origin/$BRANCH_PREFIX/baseline..remotes/origin/$branch >> $DATA_PATCH
+    git diff --shortstat remotes/origin/$BRANCH_PREFIX/baseline..remotes/origin/$branch | $DIR/git-shortstat2csv.py >> $DATA_PATCH
     ../../scripts/cloc --quiet --csv ../$EXP_PREFIX$shortName/src | tr -d '\n' >> $DATA_CLOC
     echo -e "" >> $DATA_CLOC
     
@@ -33,7 +33,7 @@ collect_stats() {
 INFO "Collect patch-stats.txt for experiments"
 
 # Clear files
-echo "" > $DATA_PATCH
+echo "VM,experiment,files changed,insertions,deletions" > $DATA_PATCH
 echo "VM,experiment,files,language,blank,comment,code" > $DATA_CLOC
 
 
