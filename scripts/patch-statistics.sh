@@ -25,7 +25,7 @@ collect_stats() {
     
     if [[ "$BRANCH_PREFIX/baseline" == $branch ]]
     then
-      echo -e "" >> $DATA_PATCH
+      echo -e "0,0,0" >> $DATA_PATCH
     fi
   done
 }
