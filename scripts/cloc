@@ -2404,7 +2404,7 @@ sub generate_report {                        # {{{1
         $header2 .= "${DELIM}blank${DELIM}comment${DELIM}code";
         $header2 .= "${DELIM}scale${DELIM}3rd gen. equiv" if $opt_3;
         $header2 .= ${DELIM} . '"' . $header_line . '"';
-        push @results, $header2;
+        # push @results, $header2;
     }
 
     my $sum_scaled = 0;
