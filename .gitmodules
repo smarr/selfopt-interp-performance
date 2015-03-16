@@ -88,3 +88,6 @@
 [submodule "implementations/R-without-object-layout"]
 	path = implementations/R-without-object-layout
 	url = https://github.com/smarr/RTruffleSOM.git
+[submodule "implementations/T-without-array-strategies"]
+	path = implementations/T-without-array-strategies
+	url = https://github.com/smarr/TruffleSOM.git
