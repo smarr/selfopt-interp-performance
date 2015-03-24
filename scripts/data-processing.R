@@ -2,7 +2,7 @@
 
 load_data_file <- function (file, row_names) {  
   bench <- read.table(file, sep="\t", header=FALSE, col.names=row_names, fill=TRUE)
-  bench$rid = seq_len(nrow(bench))  
+  bench$rid = seq_len(nrow(bench))
   bench
 }
 
@@ -26,6 +26,7 @@ prepare_vm_names <- function(data) {
 prepare_exp_names <- function(data) {
     name_map <- list("baseline"                               = "baseline",
                      "without-args-in-frame"                  = "typed args",
+                     "without-array-strategies"               = "array strategies",
                      "without-blocks-without-context"         = "min. escaping closures",
                      "without-catch-nonlocal-return-node"     = "catch-return nodes",
                      "without-control-specialization"         = "lower control structures",
