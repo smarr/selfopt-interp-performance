@@ -1,9 +1,10 @@
 #!/usr/bin/env Rscript
 library(knitr);
 args    <- commandArgs(trailingOnly = TRUE)
-# silence <- knit(args[1], args[2]);
-silence <- knit2html(args[1],
-                     args[2],
+if (grepl("\\.tex$", args[2])) {
+  silence <- knit(args[1], args[2]);
+} else {
+  silence <- knit2html(args[1], args[2],
                      header = "<link href='http://fonts.googleapis.com/css?family=Lora:400,400italic|Montserrat:400,700' rel='stylesheet' type='text/css'>",
                      styleshee = '
                      body {
@@ -47,4 +48,4 @@ silence <- knit2html(args[1],
                      .center table { margin: auto; }
                      .full table { width: 100% }
                      ');
-
+}
