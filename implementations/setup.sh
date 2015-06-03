@@ -7,14 +7,8 @@ get_web_getter
 
 ./build-graal.sh
 ./build-classic-benchmarks.sh
-./build-rpysom.sh
 ./build-trufflesom.sh
 ./build-rtrufflesom.sh
-./build-jruby.sh
-./build-sompp.sh
-./build-som.sh
-./build-csom.sh
-./build-luajit.sh
 
 OK done.
 exit 0;
@@ -54,15 +48,4 @@ if [ \! -f Pharo-bench.image ]; then
 else
   OK Got Pharo Benchmark Image
 fi
-
-if [ \! -d SOMpp ]; then
-  INFO Get SOM++
-  git clone --recursive https://github.com/SOM-st/SOMpp.git
-  cd SOMpp
-  make
-  cd ..
-else
-  OK Got SOM++
-fi
-
 
