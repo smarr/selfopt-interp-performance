@@ -49,14 +49,18 @@ function check_for_tools() {
 
 function get_pypy() {
   if [ \! -d pypy ]; then
-    get_web_getter
-    
-    INFO Get PyPy Source
-    PYPY_VERSION="2.4.0"
-    DOWNLOAD_URL="https://bitbucket.org/pypy/pypy/downloads/pypy-$PYPY_VERSION-src.tar.bz2"
-    $GET $DOWNLOAD_URL || $GET $DOWNLOAD_URL
-    tar -xjf pypy-$PYPY_VERSION-src.tar.bz2
-    mv pypy-$PYPY_VERSION-src pypy
+    if [ \! -d ../pypy ]; then
+      INFO Get PyPy Source
+      get_web_getter
+      
+      PYPY_VERSION="2.5.1"
+      DOWNLOAD_URL="https://bitbucket.org/pypy/pypy/downloads/pypy-$PYPY_VERSION-src.tar.bz2"
+      $GET $DOWNLOAD_URL || $GET $DOWNLOAD_URL
+      tar -xjf pypy-$PYPY_VERSION-src.tar.bz2
+      mv pypy-$PYPY_VERSION-src pypy
+    fi
+    INFO "Copy to Local Folder (there are compilation race conditions otherwise)"
+    cp -R ../pypy pypy
   else
     OK Got PyPy Source
   fi
