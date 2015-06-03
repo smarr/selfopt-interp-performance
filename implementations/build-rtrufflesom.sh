@@ -40,20 +40,22 @@ build_branch() {
   OK RTruffleSOM $exp Build Completed.
 }
 
-build_branch "RTruffleSOM" &
-enq_job $!
+build_branch "RTruffleSOM"
+# &
+#enq_job $!
 
-((PAR_JOBS--))
+#((PAR_JOBS--))
 
 for exp in $( ls -d R-* ); do
-  build_branch "$exp" &
-  enq_job $!
-  ((PAR_JOBS--))
-  if [ $PAR_JOBS -eq 0 ]; then
-    deq_job
-    wait $dequed_job
-    ((PAR_JOBS++))
-  fi
+  build_branch "$exp"
+ #&
+#  enq_job $!
+#  ((PAR_JOBS--))
+#  if [ $PAR_JOBS -eq 0 ]; then
+#    deq_job
+#    wait $dequed_job
+#    ((PAR_JOBS++))
+#  fi
 done
-wait
+#wait
 
