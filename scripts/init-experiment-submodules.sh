@@ -29,6 +29,7 @@ create_submodules_for_experiments() {
     cd $EXP_NAME
     git fetch
     git checkout $branch
+    git reset --hard origin/$branch
     OK "$branch updated"
   done
 }
