@@ -1,0 +1,602 @@
+Evaluation of the Benchmark Results
+===================================
+
+This is a stripped down version of the evaluation section. Instead of focusing
+on the results and their meaning with respect to the research question, we
+briefly detail what each of the R chunks do instead.
+
+This report still generates the same graphs and numbers, and can thus be used
+to compare different data sets.
+
+Setup
+-----
+
+The first step is to load the data and map the names used in the ReBench file
+to names that are better suited for the paper. The mapping is defined in the
+`scripts/data-processing.R` file.
+
+```{r setup, results='hide'}
+source("scripts/config.R", chdir=TRUE)
+data_file = "../data/benchmark.data.bz2"
+source("scripts/init.R", chdir=TRUE)
+
+fixed_geomean <- function (x) {
+  # just shift values temporarily away from 0,
+  # transformation doesn't change results
+  m <- geometric.mean(x + 1)
+  m - 1
+}
+
+# adds horizontal lines to plot
+add_hlines <- function (plot, yintercepts) {
+  for (i in yintercepts) {
+    ltype <- ifelse(i == 1, "dashed", "dotted")
+    plot <- plot + geom_hline(aes_string(yintercept = i), colour="#cccccc", linetype=ltype)
+  }
+  plot
+}
+
+# helper to generate the plots for figure 2 to 5
+point_benchmark_plot <- function (plot) {
+  plot + geom_jitter(size=1, position = position_jitter(width = .2, height = 0)) +
+  stat_summary(fun.y = fixed_geomean, geom = "point", size = 4, shape = 73, colour = "#777777")
+}
+
+```
+
+
+Impact on Interpreter
+---------------------
+
+The fist step is to prepare the data by calculating the relevant statistics.
+Note, this uses only the data after the 25 iteration, after which the
+interpreters have already reached a steady state.
+
+```{r data-preparation-interp, results='hide'}
+# Interpreter warms up fast, 25 is very conservative.
+stabilized <- subset(data, Iteration >= 25 & !grepl("Java", VM))
+
+# statistics per benchmark
+stats <- ddply(stabilized, ~ Benchmark + VM + Suite + Var + Cores + Extra,
+               summarise,
+               Time.geomean              = geometric.mean(Value),
+               Time.stddev               = sd(Value),
+               Time.median               = median(Value),
+               max = max(Value),
+               min = min(Value))
+
+# normalize results with the baseline configuration (i.e., with all experiments)
+norm <- ddply(stats, ~ Benchmark + VM + Suite + Cores + Extra, transform,
+              RuntimeRatio = Time.geomean / Time.geomean[Var == "baseline"])
+
+# aggregate results on VM level
+vms <- ddply(norm, ~ VM + Var,
+             summarise,
+             RunRatio.geomean = geometric.mean(RuntimeRatio),
+             min = min(RuntimeRatio),
+             max = max(RuntimeRatio))
+```
+
+
+Generate figure 2 of the paper to discuss the impact of optimization on
+SOM_MT's interpreter performance.
+
+
+
+```{r interpreter-optimization-SOMmt, fig.width=7, fig.height=4}
+
+rt_norm <- droplevels(subset(norm, VM == "RTruffleSOM-interp-experiments" & Var != "minimal"))
+plot <- ggplot(rt_norm, aes(x=reorder(Var, RuntimeRatio, FUN=function (x) -geometric.mean(x)), Var, y=RuntimeRatio))
+plot <- add_hlines(plot, c(0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 2, 2.5, 3, 4, 5))
+plot <- point_benchmark_plot(plot) +
+  scale_y_log10(breaks=c(0.7, 0.8, 0.9, 1, 1.2, 1.5, 2, 3, 4, 5, 6, 7, 8)) +
+  coord_flip() + ylab("Speedup Factor\n(higher is better, logarithmic scale)") +
+  theme_simple() +
+  theme(axis.text.x  = element_text(size = 7, lineheight=1, , angle=90, vjust=0.5),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_blank())
+  plot
+```
+  
+Calculate the statistics used in the discussion of figure 2.
+
+```{r interpreter-optimization-SOMmt-stats}
+
+rt_var <- droplevels(subset(vms, VM == "RTruffleSOM-interp-experiments"))
+
+# Helper functions to either calculate the percentage
+per      <- function (val) { round((val * 100) - 100, digits=1) }
+per_over <- function (val) { round((val * 100), digits=1) }
+
+# or to calculate the speedup factors
+fact  <- function (val) { round(val, digits=1) }
+mev_p <- -1.0 * per(rt_var[rt_var$Var== "min. escaping vars",]$RunRatio.geomean)
+tf_p  <- -1.0 * per(rt_var[rt_var$Var== "typed fields",]$RunRatio.geomean)
+
+
+lc_gm_x <- fact(rt_var[rt_var$Var== "lower control structures",]$RunRatio.geomean)
+lc_min_p <- per(rt_var[rt_var$Var== "lower control structures",]$min)
+lc_max_x <- fact(rt_var[rt_var$Var== "lower control structures",]$max)
+
+cg_gm_p <- per(rt_var[rt_var$Var== "cache globals",]$RunRatio.geomean)
+ic_gm_p <- per(rt_var[rt_var$Var== "inline caching",]$RunRatio.geomean)
+as_gm_p <- per(rt_var[rt_var$Var== "array strategies",]$RunRatio.geomean)
+
+mec_gm_p  <- per(rt_var[rt_var$Var== "min. escaping closures",]$RunRatio.geomean)
+mec_min_p <- per(rt_var[rt_var$Var== "min. escaping closures",]$min)
+mec_max_p <- per(rt_var[rt_var$Var== "min. escaping closures",]$max)
+
+olv_gm_p  <- per(rt_var[rt_var$Var== "opt. local vars",]$RunRatio.geomean)
+crn_gm_p  <- per(rt_var[rt_var$Var== "catch-return nodes",]$RunRatio.geomean)
+```
+
+  - minimizing escaping of variables, slowdown of `r mev_p`%
+  - typed fields slowdown of `r tf_p`%
+  - separate catch-return nodes `r crn_gm_p`%
+  - minimizing escaping of closures `r mec_gm_p`%
+  - nodes for accessing local variables `r olv_gm_p`%
+  - caching globals `r cg_gm_p`%
+  - array strategies `r as_gm_p`%
+  - lowering of control `r lc_gm_x`x (min. `r lc_min_p`%, max. `r lc_max_x`x)
+  - inline caching for methods and blocks `r ic_gm_p`%
+
+
+Figure 3 depicts the results for SOM_PE:
+
+```{r interpreter-optimization-SOMpe, fig.width=7, fig.height=4}
+t_norm <- droplevels(subset(norm, VM == "TruffleSOM-interp-experiments" & Var != "minimal"))
+plot <- ggplot(t_norm, aes(x=reorder(Var, RuntimeRatio, FUN=function (x) -geometric.mean(x)), Var, y=RuntimeRatio))
+plot <- add_hlines(plot, c(0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 2, 3, 4, 5))
+plot <- point_benchmark_plot(plot) +
+  scale_y_log10(breaks=c(0.6, 0.7, 0.8, 1, 1.2, 1.5, 2, 3, 4, 5, 6, 7, 8)) +
+  coord_flip() + ylab("Speedup Factor\n(higher is better, logarithmic scale)") +
+  theme_simple() + 
+  theme(axis.text.x  = element_text(size = 7, lineheight=0.7, angle=90, vjust=0.5),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_blank())
+  plot
+```
+
+For the discussion section, we calculate the statistics the same as for figure 2
+
+```{r interpreter-optimization-SOMpe-stats}
+t_var <- droplevels(subset(vms, VM == "TruffleSOM-interp-experiments"))
+ta_gm_po <- -1.0 * per(t_var[t_var$Var== "typed args",]$RunRatio.geomean)
+tv_gm_po <- -1.0 * per(t_var[t_var$Var== "typed vars",]$RunRatio.geomean)
+tf_gm_po  <- -1.0 * per(t_var[t_var$Var== "typed fields",]$RunRatio.geomean)
+tf_min_po <- -1.0 * per(t_var[t_var$Var== "typed fields",]$min)
+tf_max_p  <- per(t_var[t_var$Var== "typed fields",]$max)
+
+mec_gm_p  <- per(t_var[t_var$Var== "min. escaping closures",]$RunRatio.geomean)
+cg_gm_p   <- per(t_var[t_var$Var== "cache globals",]$RunRatio.geomean)
+ic_gm_p   <- per(t_var[t_var$Var== "inline caching",]$RunRatio.geomean)
+olv_gm_p   <- per(t_var[t_var$Var== "opt. local vars",]$RunRatio.geomean)
+ibo_gm_x <- fact(t_var[t_var$Var== "inline basic ops.",]$RunRatio.geomean)
+
+as_gm_p  <- per(t_var[t_var$Var== "array strategies",]$RunRatio.geomean)
+as_min_p <- per(t_var[t_var$Var== "array strategies",]$min)
+as_max_p <- per(t_var[t_var$Var== "array strategies",]$max)
+
+lco_gm_x <- fact(t_var[t_var$Var== "lower common ops",]$RunRatio.geomean)
+lcs_gm_x <- fact(t_var[t_var$Var== "lower control structures",]$RunRatio.geomean)
+```
+
+  - typed arguments `r ta_gm_po`% slower
+  - typed variables, `r tv_gm_po`% slower
+  - typed object fields slowdown of `r tf_gm_po`%, but range from `r tf_min_po`%
+    slowdown to `r tf_max_p`% speedup
+  - caching of globals `r cg_gm_p`%
+  - access to local variables `r olv_gm_p`%
+  - inline caching `r ic_gm_p`%
+  - inlining of basic operations `r ibo_gm_x`x
+  - array strategies `r as_gm_p`% (min. `r as_min_p`%, max. `r as_max_p`%)
+  - lowering common operations `r lco_gm_x`x
+  - lowering control structures `r lcs_gm_x`x
+
+
+Peak Performance
+----------------
+
+### Meta-Tracing
+
+Prepare data for the peak performance statistics.
+
+```{r data-preparation-jit-rtruffle}
+# Take last 100 data points for each benchmark
+stabilized <- subset(data, ((Benchmark == "DeltaBlue" | Benchmark == "QuickSort") & Iteration >= 900 & Iteration <= 1000) | (Benchmark != "DeltaBlue" & Benchmark != "QuickSort" & Iteration >= 400 & Iteration <= 500))
+stats <- ddply(subset(stabilized, VM != "Java" & VM != "Java-interp"), ~ Benchmark + VM + Suite + Var + Cores + Extra,
+               summarise,
+               Time.geomean              = geometric.mean(Value),
+               Time.stddev               = sd(Value),
+               Time.median               = median(Value),
+               max = max(Value),
+               min = min(Value))
+
+norm <- ddply(stats, ~ Benchmark + VM + Suite + Cores + Extra, transform,
+              RuntimeRatio = Time.geomean / Time.geomean[Var == "baseline"])
+```
+
+Create plot for SOM_MT's peak performance behavior.
+
+```{r peak-optimization-SOMmt, fig.width=7, fig.height=4}
+rt_norm <- subset(norm, VM == "RTruffleSOM-jit-experiments" & Var != "minimal")
+rt_norm <- subset(rt_norm, Var != "min. escaping vars" | Benchmark != "Towers")
+
+vms <- ddply(rt_norm, ~ VM + Var,
+             summarise,
+             RunRatio.geomean = geometric.mean(RuntimeRatio),
+             min = min(RuntimeRatio),
+             max = max(RuntimeRatio))
+
+rt_norm_outliers <- subset(rt_norm, RuntimeRatio >= 2)
+
+plot <- ggplot(rt_norm, aes(x=reorder(Var, RuntimeRatio, FUN=function (x) -geometric.mean(x)), Var, y=RuntimeRatio))
+plot <- add_hlines(plot, c(0.95, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.75, 2, 2.2))
+plot <- point_benchmark_plot(plot) +
+  coord_flip(ylim = c(.89, 2.4)) +
+  ylab("Speedup Factor\n(higher is better, logarithmic scale)") +
+  theme_simple() +
+  theme(axis.text.x  = element_text(size = 7, lineheight=1, , angle=90, vjust=0.5),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_blank()) +
+  scale_y_log10(breaks=c(0.8, 0.9, 0.95, 1, 1.2, 1.5, 1.75, 1.9, 2, 2.2))
+plot
+```
+
+Calculate statics for discussion.
+
+```{r}
+rt_var <- droplevels(subset(vms, VM == "RTruffleSOM-jit-experiments"))
+
+olv_gm_p <- per(rt_var[rt_var$Var== "opt. local vars",]$RunRatio.geomean)
+ic_gm_p   <- per(rt_var[rt_var$Var== "inline caching",]$RunRatio.geomean)
+
+mev_gm_p  <- per(rt_var[rt_var$Var== "min. escaping vars",]$RunRatio.geomean)
+
+mev_min_po <- -1.0 * per(rt_var[rt_var$Var== "min. escaping vars",]$min)
+mev_max_p <- per(rt_var[rt_var$Var== "min. escaping vars",]$max)
+mec_gm_p  <- per(rt_var[rt_var$Var== "min. escaping closures",]$RunRatio.geomean)
+mec_min_po <- -1.0 * per(rt_var[rt_var$Var== "min. escaping closures",]$min)
+mec_max_p <- per(rt_var[rt_var$Var== "min. escaping closures",]$max)
+
+
+as_gm_p  <- per(rt_var[rt_var$Var== "array strategies",]$RunRatio.geomean)
+as_min_p <- per(rt_var[rt_var$Var== "array strategies",]$min)
+as_max_p <- per(rt_var[rt_var$Var== "array strategies",]$max)
+
+tf_gm_p  <- per(rt_var[rt_var$Var== "typed fields",]$RunRatio.geomean)
+tf_min_p <- per(rt_var[rt_var$Var== "typed fields",]$min)
+tf_max_p <- per(rt_var[rt_var$Var== "typed fields",]$max)
+
+lc_gm_x <- fact(rt_var[rt_var$Var== "lower control structures",]$RunRatio.geomean)
+lc_min_p <- per(rt_var[rt_var$Var== "lower control structures",]$min)
+lc_max_x <- fact(rt_var[rt_var$Var== "lower control structures",]$max)
+
+cg_gm_p  <- per(rt_var[rt_var$Var== "cache globals",]$RunRatio.geomean)
+cg_min_p <- per(rt_var[rt_var$Var== "cache globals",]$min)
+cg_max_p <- per(rt_var[rt_var$Var== "cache globals",]$max)
+
+crn_gm_p  <- per(rt_var[rt_var$Var== "catch-return nodes",]$RunRatio.geomean)
+crn_min_p  <- per(rt_var[rt_var$Var== "catch-return nodes",]$min)
+crn_max_p  <- per(rt_var[rt_var$Var== "catch-return nodes",]$max)
+
+lco_gm_p  <- per(rt_var[rt_var$Var== "lower common ops",]$RunRatio.geomean)
+lco_min_p  <- per(rt_var[rt_var$Var== "lower common ops",]$min)
+lco_max_x  <- fact(rt_var[rt_var$Var== "lower common ops",]$max)
+
+lcs_gm_x  <- fact(rt_var[rt_var$Var== "lower control structures",]$RunRatio.geomean)
+lcs_min_p  <- per(rt_var[rt_var$Var== "lower control structures",]$min)
+lcs_max_x  <- fact(rt_var[rt_var$Var== "lower control structures",]$max)
+```
+
+  - cache globals `r cg_gm_p`%
+  - minimize escaping closures `r mec_gm_p`%
+  - local variable access `r olv_gm_p`%
+  - nodes to catch returns `r crn_gm_p`%
+  - inline caching `r ic_gm_p`%
+  - minimize escaping variables `r mev_gm_p`%,  from `r mev_min_po`% slowdown to `r mev_max_p`% speedup
+  - array strategies `r as_gm_p`% (min. `r as_min_p`%, max. `r as_max_p`%)
+  - typed fields `r tf_gm_p`% (min. `r tf_min_p`%, max. `r tf_max_p`%)
+  - lowering of library functionality `r lco_gm_p`% (min. `r lco_min_p`%, max. `r lco_max_x`x)
+  - lowering of control structures `r lcs_gm_x`x (min. `r lcs_min_p`%, max. `r lcs_max_x`x)
+
+### Partial Evaluation
+
+Plot for figure 5:
+
+```{r peak-optimization-SOMpe, fig.width=7, fig.height=4}
+t_norm <- droplevels(subset(norm, VM == "TruffleSOM-graal-experiments" & Var != "minimal"))
+
+vms <- ddply(t_norm, ~ VM + Var,
+             summarise,
+             RunRatio.geomean = geometric.mean(RuntimeRatio),
+             min = min(RuntimeRatio),
+             max = max(RuntimeRatio))
+
+plot <- ggplot(t_norm, aes(x=reorder(Var, RuntimeRatio, FUN=function (x) -geometric.mean(x)), Var, y=RuntimeRatio))
+plot <- add_hlines(plot, c(0.85, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 2, 3, 4, 5, 6, 7, 10, 12))
+plot <- point_benchmark_plot(plot) +
+  scale_y_log10(breaks=c(0.85, 1, 1.2, 1.5, 2, 3, 4, 5, 7, 8, 10, 12)) +  #, limits = c(0.7, 7)
+  ylab("Speedup Factor\n(higher is better, logarithmic scale)") +
+  coord_flip(ylim = c(0.80, 12.7)) +
+  theme_simple() + 
+  theme(axis.text.x  = element_text(size = 7, lineheight=0.7, angle=90, vjust=0.5),
+        axis.title.x = element_text(size = 9),
+        axis.title.y = element_blank())
+plot
+```
+
+Statistics for discussion:
+
+```{r}
+t_var <- droplevels(subset(vms, VM == "TruffleSOM-graal-experiments"))
+
+mec_gm_p  <-  per(t_var[t_var$Var== "min. escaping closures",]$RunRatio.geomean)
+mec_min_p <-  per(t_var[t_var$Var== "min. escaping closures",]$min)
+mec_max_p  <- per(t_var[t_var$Var== "min. escaping closures",]$max)
+
+olv_gm_p  <- per(t_var[t_var$Var== "opt. local vars",]$RunRatio.geomean)
+olv_min_po  <- -1.0 * per(t_var[t_var$Var== "opt. local vars",]$min)
+olv_max_p  <- per(t_var[t_var$Var== "opt. local vars",]$max)
+
+tv_gm_p  <- per(t_var[t_var$Var== "typed vars",]$RunRatio.geomean)
+tv_min_p <- per(t_var[t_var$Var== "typed vars",]$min)
+tv_max_p <- per(t_var[t_var$Var== "typed vars",]$max)
+
+ta_gm_p  <- per(t_var[t_var$Var== "typed args",]$RunRatio.geomean)
+ta_min_p <-  per(t_var[t_var$Var== "typed args",]$min)
+ta_max_x <- fact(t_var[t_var$Var== "typed args",]$max)
+
+tf_gm_p <- per(t_var[t_var$Var== "typed fields",]$RunRatio.geomean)
+tf_min_p <-  per(t_var[t_var$Var== "typed fields",]$min)
+tf_max_x <- fact(t_var[t_var$Var== "typed fields",]$max)
+
+crn_gm_p <- per(t_var[t_var$Var== "catch-return nodes",]$RunRatio.geomean)
+crn_min_p <- per(t_var[t_var$Var== "catch-return nodes",]$min)
+crn_max_p <- per(t_var[t_var$Var== "catch-return nodes",]$max)
+
+ibo_gm_p <- per(t_var[t_var$Var== "inline basic ops.",]$RunRatio.geomean)
+ibo_min_p <- per(t_var[t_var$Var== "inline basic ops.",]$min)
+ibo_max_x <- fact(t_var[t_var$Var== "inline basic ops.",]$max)
+
+lco_gm_p <- per(t_var[t_var$Var== "lower common ops",]$RunRatio.geomean)
+lco_min_p <- per(t_var[t_var$Var== "lower common ops",]$min)
+lco_max_x <- fact(t_var[t_var$Var== "lower common ops",]$max)
+
+cg_gm_p <- per(t_var[t_var$Var== "cache globals",]$RunRatio.geomean)
+cg_min_p <- per(t_var[t_var$Var== "cache globals",]$min)
+cg_max_x <- fact(t_var[t_var$Var== "cache globals",]$max)
+
+lcs_gm_x <- fact(t_var[t_var$Var== "lower control structures",]$RunRatio.geomean)
+lcs_min_p <- per(t_var[t_var$Var== "lower control structures",]$min)
+lcs_max_x <- fact(t_var[t_var$Var== "lower control structures",]$max)
+
+ic_gm_x <- fact(t_var[t_var$Var== "inline caching",]$RunRatio.geomean)
+ic_min_p <- per(t_var[t_var$Var== "inline caching",]$min)
+ic_max_x <- fact(t_var[t_var$Var== "inline caching",]$max)
+
+as_gm_p  <- per(t_var[t_var$Var== "array strategies",]$RunRatio.geomean)
+as_min_p <- per(t_var[t_var$Var== "array strategies",]$min)
+as_max_x <- fact(t_var[t_var$Var== "array strategies",]$max)
+```
+
+  - catch-return node `r crn_gm_p`%
+  - typed arguments `r ta_gm_p`%
+  - minimization of escaping closures `r mec_gm_p`%
+  - access local variables `r olv_gm_p`%
+  - typed variables `r tv_gm_p`% (min. `r tv_min_p`%, max. `r tv_max_p`%)
+  - inlining of basic operations `r ibo_gm_p`% (min. `r ibo_min_p`%, max. `r ibo_max_x`x)
+  - array strategies `r as_gm_p`% (min. `r as_min_p`%, max. `r as_max_x`x)
+  - lowering of common operations `r lco_gm_p`% (min. `r lco_min_p`%, max. `r lco_max_x`x)
+  - typed object fields `r tf_gm_p`% (min. `r tf_min_p`%, max. `r tf_max_x`x)
+  - caching of globals `r cg_gm_p`% (min. `r cg_min_p`%, max. `r cg_max_x`x)
+  - inline caching `r ic_gm_x`x (min. `r ic_min_p`%, max. `r ic_max_x`x)
+  - lowering of control structures `r lcs_gm_x`x (min. `r lcs_min_p`%, max. `r lcs_max_x`x)
+  
+SOM_MT vs. SOM_PE
+-----------------
+
+Plot figure 6.
+
+```{r perf-comp, fig.width=9, fig.height=5}
+base_jit    <- droplevels(subset(stabilized, Var == "baseline" | Var == ""))
+base_interp <- droplevels(subset(data, Iteration >= 25 & (Var == "baseline" | Var == "") & grepl("interp", VM)))
+
+# Exclude microbenchmarks, because neither RPython nor Graal do empty loop detection
+base_jit_j    <- droplevels(subset(base_jit,    Benchmark != "WhileLoop" & Benchmark != "IntegerLoop" & Benchmark != "FieldLoop" & Benchmark != "List" & Benchmark != "TreeSort"))
+base_interp_j <- droplevels(subset(base_interp, Benchmark != "WhileLoop" & Benchmark != "IntegerLoop" & Benchmark != "FieldLoop" & Benchmark != "List" & Benchmark != "TreeSort"))
+
+norm_jit    <- ddply(base_jit_j, ~ Benchmark, transform,
+              RunRatio = Value / geometric.mean(Value[VM == "Java"]),
+              type = "Compiled")
+norm_interp <- ddply(base_interp_j, ~ Benchmark, transform,
+              RunRatio = Value / geometric.mean(Value[VM == "Java-interp"]),
+              type = "Interpreted")
+
+## make a copy, because we need it later, and do not want those crazy names
+norm_jit_backup    <- norm_jit
+norm_interp_backup <- norm_interp
+
+levels(norm_jit$VM)    <- map_names(levels(norm_jit$VM),
+                                  list("RTruffleSOM-jit-experiments"   = "SOM[MT]",
+                                       "TruffleSOM-graal-experiments"  = "SOM[PE]"))
+levels(norm_interp$VM) <- map_names(levels(norm_interp$VM),
+                                  list("RTruffleSOM-interp-experiments" = "SOM[MT]",
+                                       "TruffleSOM-interp-experiments"  = "SOM[PE]"))
+
+norm <- rbind(norm_jit, norm_interp)
+
+p <- ggplot(subset(norm, !grepl("Java", VM)), aes(x=Benchmark, y=RunRatio))
+p <- add_hlines(p, seq(1, 18, 2))
+p + geom_boxplot(outlier.size = 0.9) +
+  theme_simple() +
+  facet_grid(. ~ type + VM) +   #, labeller = label_parsed
+  scale_y_continuous(name="Runtime normalized to\nJava (compiled or interpreted)",
+                     breaks=c(1, 4, 8, 12, 16, 20)) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5),
+        panel.border = element_rect(colour = "black", fill = NA))
+```
+
+Calculate statistics for discussion:
+
+```{r}
+levels(norm_jit_backup$VM)    <- map_names(
+    levels(norm_jit_backup$VM),
+    list("RTruffleSOM-jit-experiments"   = "SOM[MT]",
+         "TruffleSOM-graal-experiments"  = "SOM[PE]"))
+levels(norm_interp_backup$VM) <- map_names(
+    levels(norm_interp_backup$VM),
+    list("RTruffleSOM-interp-experiments" = "SOM[MT]",
+         "TruffleSOM-interp-experiments"  = "SOM[PE]"))
+norm <- rbind(norm_jit_backup, norm_interp_backup)
+
+bench <- ddply(norm, ~ VM + Benchmark + type,
+             summarise,
+             RunRatio.geomean = geometric.mean(RunRatio),
+             RunRatio.min = min(RunRatio),
+             RunRatio.max = max(RunRatio))
+
+vms <- ddply(bench, ~ VM + type,
+             summarise,
+             BenchRatio.geomean = geometric.mean(RunRatio.geomean),
+             BenchRatio.min     = min(RunRatio.geomean),
+             BenchRatio.max     = max(RunRatio.geomean))
+
+mtc_gm_x  <- fact(vms[vms$type=="Compiled" & vms$VM=="SOM[MT]",]$BenchRatio.geomean)
+mtc_min_x <- fact(vms[vms$type=="Compiled" & vms$VM=="SOM[MT]",]$BenchRatio.min)
+mtc_max_x <- fact(vms[vms$type=="Compiled" & vms$VM=="SOM[MT]",]$BenchRatio.max)
+
+pec_gm_x  <- fact(vms[vms$type=="Compiled" & vms$VM=="SOM[PE]",]$BenchRatio.geomean)
+pec_min_p <-  per(vms[vms$type=="Compiled" & vms$VM=="SOM[PE]",]$BenchRatio.min)
+pec_max_x <- fact(vms[vms$type=="Compiled" & vms$VM=="SOM[PE]",]$BenchRatio.max)
+
+mti_gm_x  <- fact(vms[vms$type=="Interpreted" & vms$VM=="SOM[MT]",]$BenchRatio.geomean)
+mti_min_x <- fact(vms[vms$type=="Interpreted" & vms$VM=="SOM[MT]",]$BenchRatio.min)
+mti_max_x <- fact(vms[vms$type=="Interpreted" & vms$VM=="SOM[MT]",]$BenchRatio.max)
+
+pei_gm_x  <- fact(vms[vms$type=="Interpreted" & vms$VM=="SOM[PE]",]$BenchRatio.geomean)
+pei_min_x <- fact(vms[vms$type=="Interpreted" & vms$VM=="SOM[PE]",]$BenchRatio.min)
+pei_max_x <- fact(vms[vms$type=="Interpreted" & vms$VM=="SOM[PE]",]$BenchRatio.max)
+```
+
+SOM_MT peak compared to Java: `r mtc_gm_x`x (min. `r mtc_min_x`x, max. `r mtc_max_x`x)
+SOM_PE peak compared to Java: `r pec_gm_x`x (min. `r pec_min_p`%, max. `r pec_max_x`x)
+
+SOM_MT interp. compared to Java interp: `r mti_gm_x`x (min. `r mti_min_x`x, max. `r mti_max_x`x)
+SOM_PE interp. compared to Java interp: `r pei_gm_x`x (min. `r pei_min_x`x, max. `r pei_max_x`x)
+
+
+
+Now, calculate the speedup over the minimal version, which doesn't contain the
+optimizations.
+
+```{r speedup-over-minimal}
+base_jit    <- droplevels(subset(stabilized, Var == "baseline" | Var == "minimal"))
+base_interp <- droplevels(subset(data, Iteration >= 25 & (Var == "baseline" | Var == "minimal") & grepl("interp", VM)))
+
+# Exclude microbenchmarks, because neither RPython nor Graal do empty loop detection
+base_jit_j    <- droplevels(subset(base_jit,    Benchmark != "WhileLoop" & Benchmark != "IntegerLoop" & Benchmark != "FieldLoop" & Benchmark != "List" & Benchmark != "TreeSort"))
+base_interp_j <- droplevels(subset(base_interp, Benchmark != "WhileLoop" & Benchmark != "IntegerLoop" & Benchmark != "FieldLoop" & Benchmark != "List" & Benchmark != "TreeSort"))
+
+norm_jit    <- ddply(base_jit_j, ~ Benchmark + VM, transform,
+              RunRatio = Value / geometric.mean(Value[Var == "minimal"]),
+              Speedup  = geometric.mean(Value[Var == "minimal"]) / Value,
+              type = "Compiled")
+norm_interp <- ddply(base_interp_j, ~ Benchmark + VM, transform,
+              RunRatio = Value / geometric.mean(Value[Var == "minimal"]),
+              Speedup  = geometric.mean(Value[Var == "minimal"]) / Value,
+              type = "Interpreted")
+
+levels(norm_jit$VM)    <- map_names(levels(norm_jit$VM),
+                                  list("RTruffleSOM-jit-experiments"   = "SOM[MT]",
+                                       "TruffleSOM-graal-experiments"  = "SOM[PE]"))
+levels(norm_interp$VM) <- map_names(levels(norm_interp$VM),
+                                  list("RTruffleSOM-interp-experiments"   = "SOM[MT]",
+                                       "TruffleSOM-interp-experiments"  = "SOM[PE]"))
+norm <- rbind(norm_jit, norm_interp)
+
+bench <- ddply(norm, ~ VM + Benchmark + type + Var,
+             summarise,
+             RunRatio.geomean = geometric.mean(RunRatio),
+             RunRatio.min = min(RunRatio),
+             RunRatio.max = max(RunRatio),
+             Speedup.geo = geometric.mean(Speedup),
+             Speedup.min = min(Speedup),
+             Speedup.max = max(Speedup))
+
+vms <- ddply(bench, ~ VM + type + Var,
+             summarise,
+             BenchRatio.geomean = geometric.mean(RunRatio.geomean),
+             BenchRatio.min     = min(RunRatio.geomean),
+             BenchRatio.max     = max(RunRatio.geomean),
+             BenchSpeed.geo     = geometric.mean(Speedup.geo),
+             BenchSpeed.min     = min(Speedup.min),
+             BenchSpeed.max     = max(Speedup.max))
+
+bl <- droplevels(subset(vms, Var == "baseline"))
+
+mtc_gm_x  <- fact(bl[bl$type=="Compiled" & bl$VM=="SOM[MT]",]$BenchSpeed.geo)
+mtc_min_p <-  per(bl[bl$type=="Compiled" & bl$VM=="SOM[MT]",]$BenchSpeed.min)
+mtc_max_x <- fact(bl[bl$type=="Compiled" & bl$VM=="SOM[MT]",]$BenchSpeed.max)
+
+pec_gm_x  <- fact(bl[bl$type=="Compiled" & bl$VM=="SOM[PE]",]$BenchSpeed.geo)
+pec_min_x <- fact(bl[bl$type=="Compiled" & bl$VM=="SOM[PE]",]$BenchSpeed.min)
+pec_max_x <- fact(bl[bl$type=="Compiled" & bl$VM=="SOM[PE]",]$BenchSpeed.max)
+
+mti_gm_x  <- fact(bl[bl$type=="Interpreted" & bl$VM=="SOM[MT]",]$BenchSpeed.geo)
+mti_min_p <-  per(bl[bl$type=="Interpreted" & bl$VM=="SOM[MT]",]$BenchSpeed.min)
+mti_max_x <- fact(bl[bl$type=="Interpreted" & bl$VM=="SOM[MT]",]$BenchSpeed.max)
+
+pei_gm_x  <- fact(bl[bl$type=="Interpreted" & bl$VM=="SOM[PE]",]$BenchSpeed.geo)
+pei_min_x <- fact(bl[bl$type=="Interpreted" & bl$VM=="SOM[PE]",]$BenchSpeed.min)
+pei_max_x <- fact(bl[bl$type=="Interpreted" & bl$VM=="SOM[PE]",]$BenchSpeed.max)
+```
+SOM_MT speedup of peak performance from minimal to baseline version: `r mtc_gm_x`x (min. `r mtc_min_p`%, max. `r mtc_max_x`x)
+SOM_MT speedup of interpreter from minimal to baseline version: `r mti_gm_x`x (min. `r mti_min_p`%, max. `r mti_max_x`x)
+
+SOM_PE speedup of peak performance from minimal to baseline version: `r pec_gm_x`x (min. `r pec_min_x`x, max. `r pec_max_x`x)
+SOM_PE speedup of interpreter from minimal to baseline version: `r pei_gm_x`x (min. `r pei_min_x`x, max. `r pei_max_x`x)
+
+
+Implementation Sizes
+--------------------
+
+Generate table of implementation sizes:
+
+```{r impl-stats, results='asis'}
+cloc  <- read.table("data/cloc.csv", sep=",", header=TRUE, fill=TRUE)
+churn <- read.table("data/patch-stats.csv", sep=",", header=TRUE, fill=TRUE)
+loc   <- merge(cloc, churn)
+
+loc <- rename(loc, c("experiment" = "Var"))
+loc <- prepare_exp_names(loc)
+
+levels(loc$VM) <- map_names(levels(loc$VM),
+                            list("RTruffleSOM" = "SOM[MT]",
+                                 "TruffleSOM"  = "SOM[PE]"))
+
+## to calculate the relative values for ins. and del., we need first the total, because git reports physical file lines
+loc_rel <- ddply(loc, ~ VM, transform, 
+                 total = comment + code + blank)
+## Note: I swap the column labels here since we use the total as denominator and 'baseline' as comparison.
+loc_rel <- ddply(loc_rel, ~ VM, transform,
+                 delIp = ((insertions / total) * 100),
+                 insIp = ((deletions / total) * 100),
+              codeI = (code[Var == "baseline"] / code) - 1.0,  ## procentual increase in LOC for experiment, with itself as baseline
+              codeIp = ((code[Var == "baseline"] / code) - 1.0) * 100)
+
+loc_tab <- droplevels(subset(loc_rel, !grepl("minimal", Var), 
+                             select = c(VM, Var, codeIp, insIp, delIp, code, insertions, deletions)))
+
+## Try to order result, doesn't seem to work
+loc_tab <- loc_tab[with(loc_tab, order(as.character(Var), code)), ]
+
+avoid_nan <- function (x) {
+  ifelse(length(x) == 0L, '', x)}
+
+t <- tabular(Justify("r ")*Heading()*Var ~ 
+            Heading()*VM*(Heading('LOC \\%') *(Format(digits=1)*codeIp))*Heading()*(avoid_nan) +
+            Format(digits=0)*Heading()*VM*(Heading('LOC') * code + Heading('ins.') * insertions + Heading('del.') * deletions)*Heading()*(avoid_nan), data=loc_tab)
+table_options(justification="c ")
+html(t)
+```
