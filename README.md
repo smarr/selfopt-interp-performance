@@ -3,8 +3,8 @@ Tracing vs. Partial Evaluation: Comparing Meta-Compilation Approaches for Self-O
 
 [This repository](https://github.com/smarr/selfopt-interp-performance/tree/papers/metatracing-vs-partialevaluation)
 contains the performance evaluation setup and measurement results for the
-[Tracing vs. Partial Evaluation](http://stefan-marr.de/papers/TODO) paper
-currently under submission. The repository and its scripts are meant to
+[Tracing vs. Partial Evaluation](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/submitted-draft.pdf)
+paper currently under submission. The repository and its scripts are meant to
 facilitate simple re-execution of the experiments to reproduce and verify the
 performance numbers given in the paper.
 
@@ -18,9 +18,9 @@ downloads, please see section 3.
 ### 1.1 Download
 
 
- VirtualBox Image: [Mirror 1](http://TODO)
+ VirtualBox Image: [Mirror 1](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/artifact.tar.bz2)
 
- MD5 check sum: `FFFFFFFFFFFFFFFFFFFFFFFFFFFF`
+ MD5 check sum: `FFFFFFFFFFFFFFFFFFFFFFFFFFFF` TODO
 
 
 ### 1.2 Setup Instructions
@@ -36,135 +36,210 @@ The image contains a Lubuntu 15.04 installation:
 
 ### 1.3 Basic Experiment Execution and Data Analysis
 
-The VM image starts up with a shell in the ~/experiments folder.
-The benchmarks are executed by the [ReBench](https://github.com/smarr/ReBench) tool.
-
-To run them, execute `rebench rebench.conf`. Executing all benchmarks takes
-about 70 hours.
-
-Note, ReBench will give a warning that the process' niceness cannot be set. To
-reduce measurement errors, it is advisable to run with `sudo` so that the OS
-scheduler does not interfere unnecessarily with the benchmarks.
-
-
-Execute benchmarks:
+Execute benchmarks (takes about 70h):
 
     `rebench rebench.conf`
 
+Collect implementation size statistics:
+
+    `scripts/patch-statistics.sh`
+
 Generate report:
 
-    
+    `scripts/knit.R evaluation.Rmd`
 
-  --> running rebench
-  --> and my data set with HTML report
+The VirtualBox image starts up with a shell in the ~/experiments folder.
+The benchmarks are executed by the [ReBench](https://github.com/smarr/ReBench) tool.
+
+To run them, execute `rebench rebench.conf`. Executing all benchmarks takes
+about 70 hours. It will create the file `data/benchmark.data`, however, it is
+not directly used by the analysis scripts.
+
+Note, ReBench gives a warning that the process' niceness cannot be set. To
+reduce measurement errors, it is advisable to run with `sudo` so that the OS
+scheduler does not interfere unnecessarily with the benchmarks.
+
+The `scripts/patch-statistics.sh` script collects the implementation and change
+sizes used in the evaluation and stores the results as `.csv` files in `data/`.
+
+Based either on the supplied data or the newly generated data, a report can be
+generated based on the `evaluation.Rmd` file. In case the benchmark data was
+obtained running ReBench, note that the `data_file` variable in
+`evaluation.Rmd` needs to be adjusted by removing the `.bz2` file extension.
+The report will be stored in `evaluation.html`.
 
 
 2. The Artifacts and Claims
 ---------------------------
 
 The artifacts provided with our paper are intended to enable others to verify
-the claims made in the paper, which are:
+that:
 
-TODO:
- - the reached performance reported in the paper
- - the soundness of the used evaluation methodology
- - the observed optimization of the JIT compilers and their ability to produce
-   equivalent compilation results independent of whether metaprogramming is
-   used or not
+ - meta-tracing and partial evaluation reach similar performance
+ - the impact of the different optimizations are as reported by the paper
+ - the implementation sizes of the meta-tracing-based interpreters are
+   generally smaller than their partial-evaluation-based counter parts
+ - the used evaluation methodology is sound
 
-Furthermore, we would like to advertise SOM and JRuby+Truffle as language
-implementations that can be used for a wide variety of purposes. SOM focuses on
-enabling language implementation research, while JRuby+Truffle can be used as
-platform for implementation research as well as high-performance Ruby
-implementation.
+Furthermore, we would like to recommend SOM as a dynamic language
+implementation of very manageable size that reaches high performance and
+therefore enables a wide range research experiments.
 
 Further material on SOM:
 
- - [SOM (Simple Object Machine)](http://som-st.github.io/): A minimal Smalltalk for teaching of and research on Virtual Machines; a brief overview.
+ - [SOM (Simple Object Machine)](http://som-st.github.io/): A minimal Smalltalk for teaching of and research on Virtual Machines; a brief overview and scientific papers.
  - [SOM_PE, (aka TruffleSOM)](https://github.com/SOM-st/TruffleSOM/blob/master/README.md): SOM implemented with the Truffle framework; brief usage instructions
  - [SOM_MT, (aka RTruffleSOM)](https://github.com/SOM-st/RTruffleSOM/blob/master/README.md): SOM implemented with RPython; brief usage instructions
 
 
-2. Step-by-Step Instructions to the Experiments
-===============================================
+3. Detailed Instructions Step-by-Step Instructions to the Experiments
+---------------------------------------------------------------------
 
-TODO
-The Step by Step Instructions should explain how to reproduce any experiments
-or other activities that support the conclusions in your paper in full detail.
-Write this for future researchers who have a deep interest in your work and who
-are studying it to improve it or compare against it faithfully. If your
-artifact is a tool, and running it to reproduce your experiments takes more
-than a few minutes, point this out and point out ways to run it on smaller
-inputs if possible.
-
-Where appropriate, include descriptions of and links to files (included in the archive) that represent expected outputs (e.g., the log files expected to be generated by your tool on the given inputs); if there are warnings that are safe to be ignored, explain which ones they are.
-
-3. Detailed Instructions
-========================
-
-3.1 Download
-3.2 Installation and Software Dependencies
-3.3 Execution of Experiments
-3.4 Report Generation and Comparison
+This section gives a more detailed overview of the setup and execution of the
+experiments.
 
 
+### 3.1 Download
+
+In addition to the VirtualBox image (cf. 1.1), we also provide the elements of
+the artifact as separate downloads.
+
+ - experiment setup as defined by this git repository branch, cf. sec. 3.3
+ - [original data set](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/data.tar.bz2)
+   the raw data of our performance and implementation size measurements
+ - [complete source tarball](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/source-snapshot.tar.bz2),
+   a copy of all source of this repository and its submodules TODO
 
 
-Self-Optimizing Interpreters
-============================
+### 3.2 Software Dependencies
 
-This repository contains all the necessary bits and pieces for an evaluation
-of different ideas around self-optimizing interpreters.
+The general software requirements are as follows:
 
-Currently, the evaluation focusses on the following aspects:
-
- - _partial evaluation vs. meta-tracing_  
-   What are the tradeoffs with respect to engineering effort and performance?
-
- - _optimization techniques and their benefits_  
-   There a number of common patterns used for self-optimizing interpreters, 
-   and we are interested in which concrete impact they have on performance.
-
- - _pure interpretation_  
-   While peek-performance is one relevant criterion, startup time, 
-   and pure interpretation speed are relevant in a number of scenarios as well.
-   Thus, we are interested in the impact of the various optimizations on 
-   interpretation speed.
-
- - _the future_  
-   Which new and powerful language features could self-optimizing interpreters
-   facilitate? We think, they provide us with a technique that makes highly dynamic
-   language features such as _metaobject protocols_ practical. Here, we experiment
-   with such techniques and investigate the performance potential.
-
-Self-Contained, Complete, and Reproducible Evaluation Setup
------------------------------------------------------------
-
-This repository contains everything that is necessary to re-execute all
-experiments. Well, that excludes obviously the hardware, and operating system
-setup.
-
-The following quick start instructions, allow to recreate the basic environment:
+ - Python 2.7, for build tools and benchmark execution
+ - C++ compiler (GCC or Clang), for RPython and Graal+Truffle
+ - ReBench (>= 0.7.1), for benchmark execution
+ - Java 7 and 8, for Graal and Truffle (Java 8u31 is a compatible Java 8 version)
+ - git, to checkout the source repositories
+ - libffi headers, for RPython
+ - make and ant, for the compiling the experiments
+ - PyPy, to compile the RPython-based experiments
+ - pip and SciPy, for the ReBench benchmarking tool
+ - R for generating the reports
+ 
+On a Ubuntu-based system, the following packages should provide the required
+software:
 
 ```bash
-git clone --recursive https://github.com/smarr/selfopt-interp-performance
+sudo apt-get install build-essential ant pypy libffi-dev pkg-config git \
+     make ant python-pip python-scipy r-base
+
+sudo pip install ReBench
 ```
 
-The setup has been used and tested on Ubuntu and OS X.
-The following programs are definitely required for execution:
+A compatible JDK can be downloaded from the [Java SE 8 Archive](http://www.oracle.com/technetwork/java/javase/downloads/java-archive-javase8-2177648.html#jdk-8u31-oth-JPR).
 
- - ReBench (>= 0.5) for benchmark execution
- - knitr (>= 1.5) and R (>= 3.0) for report generation
 
-For the various implementations, additional software is required:
+### 3.3 Checkout Git Repository and Build Experiments
 
- - Graal
-   - C/C++ compiler (GCC, Clang)
-   - Java 8
-   - Python
- - JRuby
-   - Maven
-   - 
+Our experiments are managed with git. We use submodules to track the versions
+of the various branches and ensure that all experiments are built based on the
+correct source code.
+
+The setup for this paper is in the `papers/metatracing-vs-partialevaluation`
+branch of the repository https://github.com/smarr/selfopt-interp-performance.
+
+To checkout the repository:
+
+```bash
+git clone --recursive -b papers/metatracing-vs-partialevaluation https://github.com/smarr/selfopt-interp-performance mt-vs-pe
+```
+
+Note that the cloning can take a while since the repository contains about 20
+experiments and larger submodules such as the Graal codebase.
+
+To build all code artifacts switch to the `implementations` folder and execute
+the `setup.sh` script or the separate `build-*.sh` files.
+
+```bash
+cd mt-vs-pe         # folder with the repository
+cd implementations  # sources of the experiments, Graal, benchmarks, etc.
+./setup.sh
+```
+
+Building all experiments can take multiple hours. Especially the compilation of
+the RPython based experiments takes about 15min each. In case compilation fails
+at any point, the `build-*.sh` files can be started manually. The
+`build-rtrufflesom.sh` (for SOM_MT) and `build-trufflesom.sh` (for SOM_PE)
+scripts loop over the experiments and execute the makefiles. In case something
+goes wrong, it is helpful to comment out the `make clean` to avoid recompiling
+everything.
+
+**WARNING:** the `R-minimal-without-jit-annotations` experiment won't compile,
+because it does not contain any jit-driver for RPython to indicate where
+meta-tracing can start. The scripts are currently not robust enough to take this
+into account automatically. Sorry for the inconvenience.
+
+
+### 3.3 Execution of Experiments
+
+To execute the benchmarks, we use the [ReBench](https://github.com/smarr/ReBench)
+benchmarking tool. The experiments and all benchmark parameters are configured
+in the `rebench.conf` file. The file has three main sections,
+`benchmark_suites`, `virtual_machines`, and `experiments`. They describe the
+settings for all experiments. Note that the names used in the configuration
+file are post-processed for the paper in the R scripts used to generate graphs,
+thus, the configuration contains all necessary information to find the
+benchmark implementations in the repositories, but does not match exactly the
+names in the paper.
+
+Two important parameter to ReBench are the `-d` switch, which shows debug
+output, and the `-N` switch which disables the use of the `nice` command to
+increase the process priority of the benchmarks. The `-N` is only necessary
+when root or sudo are not available.
+
+To run the benchmarks:
+
+```bash
+cd mt-vs-le  # folder with the repository
+
+sudo rebench -d rebench.conf  # runs with additional debug output
+```
+
+All benchmarks results are recorded in the `data/benchmark.data` file. The
+benchmarks can be interrupted at any point and ReBench will later continue the
+execution where it left off. However, the results of partial runs of one
+virtual machine invocation are not recorded to avoid mixing up results from
+before and after the warmup phases.
+
+When executed in debug mode `-d` the output can be verbose. Most warnings can
+be ignored as long as ReBench is able to obtain the benchmark results. If
+however execution of experiments fails, the output will contain for instance
+the used command line to run the experiments, which allows debugging the issue.
+
+When not all experiments need to be execute for instance to verify the
+performance of only a subset of them, one can comment out the experiment names
+given in the `variable_values:` section of the corresponding benchmark suites.
+Similarly, the benchmark set itself can also be reduced to a subset by
+commenting out the corresponding lines in the `benchmarks:` section of a
+benchmark suite.
+
+To obtain the statistics about implementation size, the
+`scripts/patch-statistics.sh` is used. It relies on the one hand on `git --diff
+--shortstat` to determine the differences between the baseline branch and an
+experiment. On the other hand, it uses the `cloc` tool, which is contained as a
+copy in this repository. The script iterates over the experiments and outputs
+the results into `*.csv` files in the `data/` folder.
+
+
+### 3.4 Report Generation and Comparison
+
+Before the benchmark rults
+```bash
+sudo Rscript scripts/libraries.R
+```
+
+
+    
 
 
 Licensing
