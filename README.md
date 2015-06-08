@@ -92,8 +92,8 @@ Further material on SOM:
  - [SOM_MT, (aka RTruffleSOM)](https://github.com/SOM-st/RTruffleSOM/blob/master/README.md): SOM implemented with RPython; brief usage instructions
 
 
-3. Detailed Instructions Step-by-Step Instructions to the Experiments
----------------------------------------------------------------------
+3. Step-by-Step Instructions to the Experiments
+-----------------------------------------------
 
 This section gives a more detailed overview of the setup and execution of the
 experiments.
@@ -155,7 +155,8 @@ git clone --recursive -b papers/metatracing-vs-partialevaluation https://github.
 ```
 
 Note that the cloning can take a while since the repository contains about 20
-experiments and larger submodules such as the Graal codebase.
+experiments and larger submodules such as the Graal codebase. A full git clone
+has a size of about 770MB currently.
 
 To build all code artifacts switch to the `implementations` folder and execute
 the `setup.sh` script or the separate `build-*.sh` files.
@@ -233,14 +234,22 @@ the results into `*.csv` files in the `data/` folder.
 
 ### 3.4 Report Generation and Comparison
 
-Before the benchmark rults
+Before the results can be processed, a few R libraries have to be installed.
+For this step R might require superuser rights. See `scripts/libraries.R` for
+details.
+
 ```bash
 sudo Rscript scripts/libraries.R
 ```
 
+After the libraries have been installed, the actual report can be generated
+by executing `scripts/knit.R evaluation.Rmd`. This will use the KnitR tool
+to generate an HTML file from the markdown file with embedded R code.
 
-    
-
+The result should look like this [example](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/evaluation.html).
+The report does not directly discuss the results. Please see the paper draft
+for that. Instead, the report discusses how the results are evaluated to enable
+future studies based on our results and evaluation.
 
 Licensing
 ---------
