@@ -18,9 +18,9 @@ downloads, please see section 3.
 ### 1.1 Download
 
 
- VirtualBox Image: [Mirror 1](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/artifact.tar.bz2)
+ VirtualBox Image: [Mirror 1](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/mtvspe.virtualbox.tar.bz2), [Mirror 2](https://drive.google.com/file/d/0B-LbpNQP1hoUdHVVUEJJa1JYNVk/view?usp=sharing)
 
- MD5 check sum: `FFFFFFFFFFFFFFFFFFFFFFFFFFFF` TODO
+ MD5 check sum: `d7ac6b99ba4f02efe2ac8f7685176a80`
 
 
 ### 1.2 Setup Instructions
@@ -108,7 +108,7 @@ the artifact as separate downloads.
  - [original data set](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/data.tar.bz2)
    the raw data of our performance and implementation size measurements
  - [complete source tarball](http://stefan-marr.de/papers/oopsla-marr-ducasse-meta-tracing-vs-partial-evaluation-artifacts/source-snapshot.tar.bz2),
-   a copy of all source of this repository and its submodules TODO
+   a copy of all source of this repository and its submodules
 
 
 ### 3.2 Software Dependencies
