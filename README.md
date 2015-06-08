@@ -251,6 +251,12 @@ The report does not directly discuss the results. Please see the paper draft
 for that. Instead, the report discusses how the results are evaluated to enable
 future studies based on our results and evaluation.
 
+*Note*, the `evaluation.Rmd` uses the `data/benchmark.data.bz2` file. To change
+that please see the top of the file around line 21. The variable `data_file`
+needs to be adapted for instance to point to the output of ReBench, which is
+normally in `data/benchmark.data` (without `.bz2`).
+
+
 Licensing
 ---------
 
