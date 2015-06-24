@@ -217,6 +217,8 @@ be ignored as long as ReBench is able to obtain the benchmark results. If
 however execution of experiments fails, the output will contain for instance
 the used command line to run the experiments, which allows debugging the issue.
 
+#### Executing a Subset of Benchmarks
+
 When not all experiments need to be execute for instance to verify the
 performance of only a subset of them, one can comment out the experiment names
 given in the `variable_values:` section of the corresponding benchmark suites.
@@ -287,6 +289,8 @@ The result should look like this [example](http://stefan-marr.de/papers/oopsla-m
 The report does not directly discuss the results. Please see the paper draft
 for that. Instead, the report discusses how the results are evaluated to enable
 future studies based on our results and evaluation.
+
+#### Using Another Data File
 
 *Note*, the `evaluation.Rmd` uses the `data/benchmark.data.bz2` file. To change
 that please see the top of the file around line 21. The variable `data_file`
