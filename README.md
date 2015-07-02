@@ -217,12 +217,51 @@ be ignored as long as ReBench is able to obtain the benchmark results. If
 however execution of experiments fails, the output will contain for instance
 the used command line to run the experiments, which allows debugging the issue.
 
+#### Executing a Subset of Benchmarks
+
 When not all experiments need to be execute for instance to verify the
 performance of only a subset of them, one can comment out the experiment names
 given in the `variable_values:` section of the corresponding benchmark suites.
 Similarly, the benchmark set itself can also be reduced to a subset by
 commenting out the corresponding lines in the `benchmarks:` section of a
 benchmark suite.
+
+For example, to only compare the baseline against the version without array
+strategies, the settings for `steady-trufflesom` should be edited to resemble
+the following snippet.
+
+```yaml
+benchmark_suites:
+    steady-trufflesom:
+        gauge_adapter: RebenchLog
+        command: &SOM_CMD " -cp Smalltalk:Examples/Benchmarks/Json:Examples/Benchmarks/LanguageFeatures:Examples/Benchmarks/GraphSearch:Examples/Benchmarks/Richards:Examples/Benchmarks/DeltaBlue:Examples/Benchmarks/NBody Examples/Benchmarks/BenchmarkHarness.som  %(benchmark)s "
+        max_runtime: 60000
+        variable_values: &TSOM_EXP
+            - baseline
+            #- minimal
+            #- without-args-in-frame
+            - without-array-strategies
+            #- without-blocks-without-context
+            #- without-catch-nonlocal-return-node
+            # ... more commented out below
+```
+
+If only for instance the DeltaBlue benchmark is desired, the `benchmark:`
+settings below the section given above can be changed to:
+
+```yaml
+            #- without-unessential-lowering-prims
+            #- without-var-access-specialization
+        benchmarks: &FULL_WARMUP
+            - DeltaBlue:
+                extra_args: "1000 0 6000"
+            #- Fannkuch:
+            #    extra_args: "500 0 9"
+            #- Mandelbrot:
+            #    extra_args: "500 0 1500"
+            #- Richards:
+            #    extra_args: "500 0 100"
+```
 
 To obtain the statistics about implementation size, the
 `scripts/patch-statistics.sh` is used. It relies on the one hand on `git --diff
@@ -251,11 +290,20 @@ The report does not directly discuss the results. Please see the paper draft
 for that. Instead, the report discusses how the results are evaluated to enable
 future studies based on our results and evaluation.
 
+#### Using Another Data File
+
 *Note*, the `evaluation.Rmd` uses the `data/benchmark.data.bz2` file. To change
 that please see the top of the file around line 21. The variable `data_file`
 needs to be adapted for instance to point to the output of ReBench, which is
 normally in `data/benchmark.data` (without `.bz2`).
 
+The adapted section in `evaluation.Rmd` should look like this:
+
+```r
+22:  source("scripts/config.R", chdir=TRUE)
+23:  data_file = "../data/benchmark.data"  ## <<-- was: data_file = "../data/benchmark.data.bz2"
+24:  source("scripts/init.R", chdir=TRUE)
+```
 
 Licensing
 ---------
