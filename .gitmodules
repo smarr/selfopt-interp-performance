@@ -91,3 +91,6 @@
 [submodule "implementations/T-without-array-strategies"]
 	path = implementations/T-without-array-strategies
 	url = https://github.com/smarr/TruffleSOM.git
+[submodule "implementations/RR-baseline-no-gc"]
+	path = implementations/RR-baseline-no-gc
+	url = https://github.com/smarr/RTruffleSOM.git
