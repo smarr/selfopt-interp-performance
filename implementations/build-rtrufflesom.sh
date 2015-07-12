@@ -41,6 +41,7 @@ build_branch() {
 }
 
 build_branch "RTruffleSOM"
+build_branch "RR-baseline-no-gc"
 # &
 #enq_job $!
 
