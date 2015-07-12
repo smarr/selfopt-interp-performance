@@ -1,5 +1,5 @@
 #!/bin/bash
-mkdir data/
+mkdir -p data
 cd data
 
 scp 8:Projects/COMPARE-TRACE-EVAL/data/*.data .
