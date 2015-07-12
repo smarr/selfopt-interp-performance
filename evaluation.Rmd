@@ -92,7 +92,7 @@ plot <- point_benchmark_plot(plot) +
   scale_y_log10(breaks=c(0.7, 0.8, 0.9, 1, 1.2, 1.5, 2, 3, 4, 5, 6, 7, 8)) +
   coord_flip() + ylab("Speedup Factor\n(higher is better, logarithmic scale)") +
   theme_simple() +
-  theme(axis.text.x  = element_text(size = 7, lineheight=1, , angle=90, vjust=0.5),
+  theme(axis.text.x  = element_text(size = 7, lineheight=1, angle=90, vjust=0.5),
         axis.title.x = element_text(size = 9),
         axis.title.y = element_blank())
   plot
@@ -236,7 +236,7 @@ plot <- point_benchmark_plot(plot) +
   coord_flip(ylim = c(.89, 2.4)) +
   ylab("Speedup Factor\n(higher is better, logarithmic scale)") +
   theme_simple() +
-  theme(axis.text.x  = element_text(size = 7, lineheight=1, , angle=90, vjust=0.5),
+  theme(axis.text.x  = element_text(size = 7, lineheight=1, angle=90, vjust=0.5),
         axis.title.x = element_text(size = 9),
         axis.title.y = element_blank()) +
   scale_y_log10(breaks=c(0.8, 0.9, 0.95, 1, 1.2, 1.5, 1.75, 1.9, 2, 2.2))
