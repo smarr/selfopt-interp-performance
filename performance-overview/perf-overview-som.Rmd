@@ -6,11 +6,35 @@ Performance Overview of SOM Implementations
 if (Sys.getenv("RSTUDIO") == "1") { setwd("/Users/smarr/Projects/PostDoc/SELF-OPT-INT/performance-overview") }
 
 source("../scripts/libraries.R", chdir=TRUE)
-data <- load_data_file("perf-overview.data")
-data <- subset(data, select = c(Value, Unit, Benchmark, VM, Suite))
+data <- rbind(load_data_file("java.data"),
+              load_data_file("som.data"),
+              load_data_file("somns.data"))
+data <- subset(data, select = c(Value, Unit, Benchmark, VM, Suite, Extra, Iteration))
 data <- prepare_vm_names(data)
-steady <- droplevels(subset(data, grepl("som", Suite) | grepl("java", Suite) | grepl("startup", Suite)))
+# steady <- droplevels(subset(data, grepl("som", Suite) | grepl("java", Suite) | grepl("startup", Suite)))
+
+## drop data based on incomplete runs
+
+data <- subset(data, (Benchmark != "Bounce" | Extra != 10000) &
+                     (Benchmark != "BubbleSort" | Extra != 3000) &
+                     (Benchmark != "DeltaBlue" | Extra != 20000) &
+                    (Benchmark != "Fannkuch" | Extra != 10) &
+                 (Benchmark != "Json" | Extra != 120) &
+                 (Benchmark != "Mandelbrot" | Extra != 1200) &
+                 (Benchmark != "NBody" | Extra != 800000) &
+                 (Benchmark != "Fannkuch" | Extra != 10) &
+                 (Benchmark != "PageRank" | Extra != 2500) &
+                 (Benchmark != "Permute" | Extra != 5000) &
+                 (Benchmark != "Queens" | Extra != 3000) &
+                 (Benchmark != "QuickSort" | Extra != 3000) &
+                 (Benchmark != "Sieve" | Extra != 8000) &
+                 (Benchmark != "Storage" | Extra != 2000) &
+                 (Benchmark != "Towers" | Extra != 2000) 
+               )
+
 ```
+
+
 
 
 Overall Performance
@@ -21,9 +45,26 @@ in form of a simple bar chart:
 
 **TODO** add proper error bars, and read up on effect size confidence intervals.
 
-```{r echo=FALSE, fig.width=6, fig.height=4, dev='svg'}
+```{r echo=FALSE, fig.width=6, fig.height=4, dev='pdf'}
+
+# remove benchmarks that are not availabe for all VMs
+#data <- subset(data, Benchmark != "TreeSort" & Benchmark != "PageRank" & Benchmark != "Json" & Benchmark != "GraphSearch" & Benchmark != "WhileLoop" & Benchmark != "IntegerLoop" & Benchmark != "FieldLoop")
+data <- subset(data, Benchmark != "TreeSort" & Benchmark != "GraphSearch" & Benchmark != "Towers")
+
+
 # aggregate results for display
-stats <- ddply(steady, ~ Benchmark + VM + Suite,
+jit    <- subset(data, Iteration >= 900 & Iteration <= 1000  & !grepl("Loop", Benchmark))
+interp <- subset(data, Iteration >= 25 & grepl("interp", Suite) & !grepl("Loop", Benchmark))
+
+stats_jit <- ddply(jit, ~ Benchmark + VM + Suite + Extra,
+               summarise,
+               Time.mean                 = mean(Value),
+               Time.geomean              = geometric.mean(Value),
+               Time.stddev               = sd(Value),
+               Time.median               = median(Value),
+               max = max(Value),
+               min = min(Value))
+stats_interp <- ddply(interp, ~ Benchmark + VM + Suite + Extra,
                summarise,
                Time.mean                 = mean(Value),
                Time.geomean              = geometric.mean(Value),
@@ -32,37 +73,85 @@ stats <- ddply(steady, ~ Benchmark + VM + Suite,
                max = max(Value),
                min = min(Value))
 
+
+
 # normalize for each benchmark separately to the Java baseline
-norm <- ddply(stats, ~ Benchmark, transform,
-              RuntimeRatio = Time.mean / Time.mean[VM == "Java8"])
+norm_jit <- ddply(stats_jit, ~ Benchmark + Extra, transform,
+              RuntimeRatio = Time.mean / Time.mean[VM == "Graal"])
+subset(norm_jit, VM == "Graal" | VM == "SOMns", select = c(Benchmark, VM, Time.mean, RuntimeRatio))
+
+norm_interp <- ddply(stats_interp, ~ Benchmark, transform,
+              RuntimeRatio = Time.mean / Time.mean[VM == "Java8-interp"])
+
 
 # summarize to VMs
-vms <- ddply(norm, ~ VM,
+vms_jit <- ddply(norm_jit, ~ VM,
              summarise,
-             RunRatio.geomean = geometric.mean(RuntimeRatio))
+             RunRatio.geomean = geometric.mean(RuntimeRatio),
+             min = min(RuntimeRatio),
+             max = max(RuntimeRatio),
+             type = "Compiled")
+vms_interp <- ddply(norm_interp, ~ VM,
+             summarise,
+             RunRatio.geomean = geometric.mean(RuntimeRatio),
+             min = min(RuntimeRatio),
+             max = max(RuntimeRatio),
+             type = "Interpreted")
+
+
 ```
 
-```{r som-box-overview, echo=FALSE, fig.width=5, fig.height=2.5, dev='svg'}
- soms <- droplevels(subset(norm, VM == "Java8" | VM == "RPySOM" | VM == "RTruffleSOM" | VM == "SOM++-interp" | VM == "TruffleSOM" | VM == "SOM-interp"))
- name_map <-     list("Java8"                 = "Java",
-                      "SOM++-interp"          = "SOM++",
-                      "SOM-interp"            = "SOM")
- # Rename
- levels(soms$VM)  <- map_names(levels(soms$VM), name_map)
 
-
- plot <- ggplot(soms, aes(x=reorder(VM, RuntimeRatio, FUN=function (x) -median(x)), VM, y=RuntimeRatio)) +
-  geom_hline(aes(yintercept=1), colour="#cccccc", linetype="dashed") +
-  geom_hline(aes(yintercept=10), colour="#cccccc", linetype="dashed") +
-  geom_hline(aes(yintercept=100), colour="#cccccc", linetype="dashed") +
-  geom_hline(aes(yintercept=1000), colour="#cccccc", linetype="dashed") +
-  geom_boxplot(fill=get_color(5, 7)) + theme_bw() + theme_simple() + theme(axis.text.x = element_text(angle= 90, vjust=0.5, hjust=1)) +
-  scale_y_log10(breaks=c(1,2,3,10,20,30,50,100,200,300,500,1000)) + #limit=c(0,30), breaks=seq(0,100,5), expand = c(0,0)
-  coord_flip() + xlab("Runtime, normalized\nto Java (lower is better)")
- plot
+```{r compiled, echo=FALSE, fig.width=5, fig.height=3, dev='pdf'}
+p <- ggplot(droplevels(subset(norm_jit, !grepl("Java", VM) & VM != "RTruffleSOM")), aes(x=Benchmark, y=RuntimeRatio))
+#p <- add_hlines(p, seq(1, 20, 2))
+p <- p + geom_boxplot(outlier.size = 0.9) +
+  theme_simple() +
+  facet_grid(. ~ VM) +
+  # facet_grid(. ~ type + VM, labeller = label_parsed) +
+  scale_y_continuous(name="Runtime normalized to\nJava (compiled)",
+                     breaks=c(1, 4, 6, 8, 10, 12, 16, 20))
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5),
+        panel.border = element_rect(colour = "black", fill = NA))
+p
 ```
 
-```{r echo=FALSE, fig.width=7, fig.height=5, dev='svg'}
+```{r interpreted, echo=FALSE, fig.width=5, fig.height=3, dev='pdf'}
+p <- ggplot(droplevels(subset(norm_interp, !grepl("Java", VM) & VM != "SOM++-interp")), aes(x=Benchmark, y=RuntimeRatio))
+#p <- add_hlines(p, seq(1, 20, 2))
+p <- p + geom_boxplot(outlier.size = 0.9) +
+  theme_simple() +
+  facet_grid(. ~ VM) +
+  # facet_grid(. ~ type + VM, labeller = label_parsed) +
+  scale_y_continuous(name="Runtime normalized to\nJava (interpreted)",
+                     breaks=c(1, 4, 8, 12, 16, 20))
+p <- p + theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust=0.5),
+        panel.border = element_rect(colour = "black", fill = NA))
+p
+```
+
+
+```{r som-box-overview, echo=FALSE, fig.width=5, fig.height=2.5, dev='pdf'}
+#  soms <- droplevels(subset(norm, VM == "Java8" | VM == "RPySOM" | VM == "RTruffleSOM" | VM == "SOM++-interp" | VM == "TruffleSOM" | VM == "SOM-interp"))
+#  name_map <-     list("Java8"                 = "Java",
+#                       "SOM++-interp"          = "SOM++",
+#                       "SOM-interp"            = "SOM")
+#  # Rename
+#  levels(soms$VM)  <- map_names(levels(soms$VM), name_map)
+# 
+# 
+#  plot <- ggplot(soms, aes(x=reorder(VM, RuntimeRatio, FUN=function (x) -median(x)), VM, y=RuntimeRatio)) +
+#   geom_hline(aes(yintercept=1), colour="#cccccc", linetype="dashed") +
+#   geom_hline(aes(yintercept=10), colour="#cccccc", linetype="dashed") +
+#   geom_hline(aes(yintercept=100), colour="#cccccc", linetype="dashed") +
+#   geom_hline(aes(yintercept=1000), colour="#cccccc", linetype="dashed") +
+#   geom_boxplot(fill=get_color(5, 7)) + theme_bw() + theme_simple() + theme(axis.text.x = element_text(angle= 90, vjust=0.5, hjust=1)) +
+#   scale_y_log10(breaks=c(1,2,3,10,20,30,50,100,200,300,500,1000)) + #limit=c(0,30), breaks=seq(0,100,5), expand = c(0,0)
+#   coord_flip() + xlab("Runtime, normalized\nto Java (lower is better)")
+#  plot
+```
+
+```{r echo=FALSE, fig.width=7, fig.height=5, dev='pdf'}
 # create a simple bar chart
 # plot <- ggplot(norm, aes_string(x="VM", y="RuntimeRatio"))
 # plot <- plot + geom_bar(stat="identity",

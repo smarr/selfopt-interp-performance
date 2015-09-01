@@ -31,7 +31,7 @@ in form of a simple bar chart:
 
 ```{r echo=FALSE, fig.width=6, fig.height=4, dev='svg'}
 # aggregate results for display
-stats <- ddply(data, ~ Benchmark + VM + Suite,
+stats <- ddply(subset(data, Benchmark != "TreeSort" & Benchmark != "PageRank" & Benchmark != "Json" & Benchmark != "GraphSearch" & Benchmark != "WhileLoop" & Benchmark != "IntegerLoop" & Benchmark != "FieldLoop"), ~ Benchmark + VM + Suite,
                summarise,
                Time.mean                 = mean(Value),
                Time.geomean              = geometric.mean(Value),
