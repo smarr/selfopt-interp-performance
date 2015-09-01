@@ -7,3 +7,6 @@
 [submodule "implementations/SOMns"]
 	path = implementations/SOMns
 	url = https://github.com/smarr/SOMns.git
+[submodule "implementations/SOMns-wo-opt"]
+	path = implementations/SOMns-wo-opt
+	url = https://github.com/smarr/SOMns.git
