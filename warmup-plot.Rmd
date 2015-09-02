@@ -1,0 +1,50 @@
+# Warmup Plots of the Data Set
+
+```{r prepare-data, echo=TRUE, message=TRUE, warning=TRUE, dev='svg'}
+# load libraries, the data, and prepare it
+if (Sys.getenv("RSTUDIO") == "1") { setwd("/Users/smarr/Projects/PostDoc/SELF-OPT-INT/") }
+
+source("scripts/libraries.R", chdir=TRUE)
+data <- rbind(load_data_file("data/java.data"),
+              load_data_file("data/actor.data"),
+              load_data_file("data/somns.data"))
+data <- subset(data, select = c(Value, Unit, Benchmark, VM, Suite, Cores, InputSize, Var, Extra, Iteration))
+data <- prepare_vm_names(data)
+
+summary(data)
+
+warmup_plot <- function (data_c, b, a, c) {
+  ## First take the medians over the values for each VM separated
+      medians <- ddply(data_c, ~ VM, summarise,
+                 median = median(Value))
+      # use the highest one with a little margin as an upper bound
+      upperBound <- 2 * max(medians$median)
+      data_c <- ddply(data_c, ~ Benchmark, here(transform),
+                      ValCut = pmin(Value, upperBound))
+
+      plot <- ggplot(data_c, aes(x=Iteration, y=ValCut))
+      plot <- plot + geom_line(aes(colour = VM))
+      plot <- plot + ggtitle(paste(b, a, c))
+      plot <- plot + theme_simple()
+      print(plot)
+}
+```
+
+# Plots
+
+```{r log-plots, echo=FALSE, dev='png', fig.keep='all', fig.width=10, fig.height=6}
+b <- "Bounce"
+a <- "3000"
+c <- "1"
+
+for (b in levels(data$Benchmark)) {
+  data_b <- droplevels(subset(data, Benchmark == b))
+  for (a in levels(factor(data_b$Extra))) {
+    data_a <- droplevels(subset(data_b, Extra == a))
+    for (c in levels(factor(data_a$Cores))) {
+      data_c <- droplevels(subset(data_a, Cores == c))
+      warmup_plot(data_c, b, a, c)
+    }
+  }
+}
+```
