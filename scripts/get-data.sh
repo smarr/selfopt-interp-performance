@@ -1,4 +1,8 @@
 #!/bin/bash
 mkdir -p data
-scp 8:Projects/RoarVM-buildslave/selfopt-interp-performance/build/data/*.data data/
-ssh 8 'bash -s' < scripts/spec.sh >& data/spec.md
+REV=`git rev-parse HEAD | cut -c1-8`
+TARGET_PATH=benchmark-results/somns-agere/$REV
+BASE_DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+scp 8:$TARGET_PATH/\*.data $BASE_DIR/../data/
+ssh 8 'bash -s' < scripts/spec.sh >& $BASE_DIR/../data/spec.md
