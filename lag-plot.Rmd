@@ -1,0 +1,34 @@
+# Lag Plots of the Data Set
+
+```{r prepare-data, echo=TRUE, message=TRUE, warning=TRUE, dev='svg'}
+# load libraries, the data, and prepare it
+if (Sys.getenv("RSTUDIO") == "1") { setwd("/Users/smarr/Projects/PostDoc/SELF-OPT-INT/") }
+
+source("scripts/libraries.R", chdir=TRUE)
+data <- rbind(load_data_file("data/java.data"),
+              load_data_file("data/actor.data"),
+              load_data_file("data/somns.data"))
+data <- subset(data, select = c(Value, Unit, Benchmark, VM, Suite, Cores, InputSize, Var, Extra, Iteration))
+data <- prepare_vm_names(data)
+
+summary(data)
+```
+
+# Plots
+
+```{r log-plots, echo=FALSE, dev='png', fig.keep='all'}
+for (b in levels(data$Benchmark)) {
+  data_b <- droplevels(subset(data, Benchmark == b))
+  for (vm in levels(data_b$VM)) {
+    data_vm <- droplevels(subset(data_b, VM == vm))
+    for (a in levels(factor(data_vm$Extra))) {
+      data_a <- droplevels(subset(data_vm, Extra == a))
+      for (c in levels(factor(data_a$Cores))) {
+        data_c <- droplevels(subset(data_a, Cores == c & Iteration > 500))
+        Runtime.in.millisecs <- data_a$Value
+        lag.plot(Runtime.in.millisecs, main = paste(b, vm, a, c))
+      }
+    }
+  }
+}
+```
