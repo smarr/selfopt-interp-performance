@@ -25,6 +25,8 @@ warmup_plot <- function (data_c, b, a, c) {
       plot <- ggplot(data_c, aes(x=Iteration, y=ValCut))
       plot <- plot + geom_line(aes(colour = VM))
       plot <- plot + ggtitle(paste(b, a, c))
+      plot <- plot + scale_x_continuous(breaks = seq(0, max(data_c$Iteration), 100))
+      plot <- plot + geom_vline(xintercept = c(100, 200, 300), linetype = "longdash", colour = "#cccccc")
       plot <- plot + theme_simple()
       print(plot)
 }
