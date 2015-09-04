@@ -1,0 +1,68 @@
+# Scaling Plots of the Data Set
+
+```{r prepare-data, echo=TRUE, message=TRUE, warning=TRUE, dev='svg'}
+# load libraries, the data, and prepare it
+if (Sys.getenv("RSTUDIO") == "1") { setwd("/Users/smarr/Projects/PostDoc/SELF-OPT-INT/") }
+
+source("scripts/libraries.R", chdir=TRUE)
+data <- load_data_file("data/actor.data")
+data <- subset(data, select = c(Value, Unit, Benchmark, VM, Suite, Cores, InputSize, Var, Extra, Iteration))
+data <- prepare_vm_names(data)
+
+summary(data)
+
+scaling_plot <- function (data_a, b, a) {
+  stats <- ddply(data_a, ~ Benchmark + VM + Suite + Extra + Cores,
+                 summarise,
+                 Time.mean                 = mean(Value),
+                 Time.geomean              = geometric.mean(Value),
+                 Time.stddev               = sd(Value),
+                 Time.median               = median(Value),
+                 max = max(Value),
+                 min = min(Value))
+  
+  plot <- ggplot(stats, aes(x=Cores, y=Time.mean))
+  plot <- plot + geom_line(aes(colour = VM))
+  plot <- plot + ggtitle(paste(b, a))
+  plot <- plot + theme_simple()
+  print(plot)
+}
+
+speedup_plot <- function (data_a, b, a) {
+  stats <- ddply(data_a, ~ Benchmark + VM + Suite + Extra + Cores,
+                 summarise,
+                 Time.mean                 = mean(Value),
+                 Time.geomean              = geometric.mean(Value),
+                 Time.stddev               = sd(Value),
+                 Time.median               = median(Value),
+                 max = max(Value),
+                 min = min(Value))
+  
+  norm <- ddply(stats, ~ Benchmark + VM + Suite + Extra,
+                transform,
+                Time.norm = Time.mean / Time.mean[Cores == 1],
+                Speedup   = Time.mean[Cores == 1]/ Time.mean)
+  
+  plot <- ggplot(norm, aes(x=Cores, y=Speedup))
+  plot <- plot + geom_line(aes(colour = VM))
+  plot <- plot + ggtitle(paste(b, a))
+  plot <- plot + theme_simple()
+  print(plot)
+}
+```
+
+# Plots
+
+```{r log-plots, echo=FALSE, dev='png', fig.keep='all', fig.width=10, fig.height=6}
+b <- "Chameneos"
+a <- "100:30000"
+
+for (b in levels(data$Benchmark)) {
+  data_b <- droplevels(subset(data, Benchmark == b))
+  for (a in levels(factor(data_b$Extra))) {
+    data_a <- droplevels(subset(data_b, Extra == a))
+    scaling_plot(data_a, b, a)
+    speedup_plot(data_a, b, a)
+  }
+}
+```
