@@ -53,12 +53,13 @@ speedup_plot <- function (data_a, b, a) {
 
 # Plots
 
-```{r log-plots, echo=FALSE, dev='png', fig.keep='all', fig.width=10, fig.height=6}
+```{r log-plots, echo=FALSE, dev='png', fig.keep='all', fig.width=10, fig.height=6, results='asis'}
 b <- "Chameneos"
 a <- "100:30000"
 
 for (b in levels(data$Benchmark)) {
   data_b <- droplevels(subset(data, Benchmark == b))
+  cat(paste0("\n\n## ", b, "\n"))
   for (a in levels(factor(data_b$Extra))) {
     data_a <- droplevels(subset(data_b, Extra == a))
     scaling_plot(data_a, b, a)
