@@ -7,6 +7,7 @@ if (Sys.getenv("RSTUDIO") == "1") { setwd("/Users/smarr/Projects/PostDoc/SELF-OP
 source("scripts/libraries.R", chdir=TRUE)
 data <- rbind(load_data_file("data/java.data"),
               load_data_file("data/actor.data"),
+              load_data_file("data/micro.data"),
               load_data_file("data/somns.data"))
 data <- subset(data, select = c(Value, Unit, Benchmark, VM, Suite, Cores, InputSize, Var, Extra, Iteration))
 data <- prepare_vm_names(data)
