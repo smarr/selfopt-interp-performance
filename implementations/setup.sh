@@ -6,7 +6,7 @@ source script.inc
 check_for_tools git ant tar make javac mv unzip uname cc c++
 get_web_getter
 
-./build-graal.sh
+# ./build-graal.sh
 ./build-classic-benchmarks.sh
 ./build-somns.sh
 
