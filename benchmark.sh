@@ -1,9 +1,9 @@
 #!/bin/sh
 mkdir -p data
-#rebench -f -d --scheduler=random --without-nice rebench.conf all
+rebench -f -d --scheduler=random --without-nice rebench.conf all
 #rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-micro
-rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-jit
-rebench -f -d --scheduler=random --without-nice rebench.conf Java
+#rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-jit
+#rebench -f -d --scheduler=random --without-nice rebench.conf Java
 
 DATA_ROOT=~/benchmark-results/somns-agere
 
