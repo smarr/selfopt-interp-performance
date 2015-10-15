@@ -10,3 +10,6 @@
 [submodule "implementations/SOMns-wo-opt"]
 	path = implementations/SOMns-wo-opt
 	url = https://github.com/smarr/SOMns.git
+[submodule "implementations/savina"]
+	path = implementations/savina
+	url = https://github.com/smarr/savina.git
