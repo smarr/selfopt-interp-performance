@@ -10,7 +10,7 @@ rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-micro
 
 DATA_ROOT=~/benchmark-results/somns-agere
 
-NUM_PREV=`ls -l | grep ^d | wc -l`
+NUM_PREV=`ls -l $DATA_ROOT | grep ^d | wc -l`
 NUM_PREV=`printf "%03d" $NUM_PREV`
 
 REV=`git rev-parse HEAD | cut -c1-8`
