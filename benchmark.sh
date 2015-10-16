@@ -3,7 +3,7 @@ mkdir -p data
 export GRAAL_HOME=/home/smarr/Projects/graal/jvmci
 #rebench -f -d --scheduler=random --without-nice rebench.conf all
 #rebench -f -d --scheduler=random --without-nice rebench.conf Savina
-rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-actor
+#rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-actor
 rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-micro
 #rebench -f -d --scheduler=random --without-nice rebench.conf SOMns-jit
 #rebench -f -d --scheduler=random --without-nice rebench.conf Java
