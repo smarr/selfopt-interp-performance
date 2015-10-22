@@ -1,6 +1,6 @@
 #!/bin/sh
 mkdir -p data
-rm data/*.data
+#rm data/*.data
 export GRAAL_HOME=/home/smarr/Projects/graal/jvmci
 #rebench -f -d --scheduler=random --without-nice rebench.conf all
 rebench -d --scheduler=random --without-nice rebench.conf SOMns-micro
